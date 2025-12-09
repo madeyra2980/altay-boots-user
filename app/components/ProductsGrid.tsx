@@ -2,22 +2,11 @@
 
 import { useEffect, useState } from 'react'
 
-type Product = {
-  id?: number
-  name: string
-  description?: string
-  text?: string
-  price?: number
-  oldPrice?: number
-  photos?: string[]
-}
-
-const API_URL = 'http://185.146.3.132:8080/api/v1/auth/products'
-
 export default function ProductsGrid() {
   const [items, setItems] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<number | null>(null) // выбранный продукт
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -31,11 +20,8 @@ export default function ProductsGrid() {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         })
-        const data = await res.json().catch(() => [])
-        if (!res.ok) {
-          const message = (data && data.message) || 'Не удалось загрузить товары'
-          throw new Error(message)
-        }
+        const data = await res.json()
+        if (!res.ok) throw new Error(data?.message || 'Не удалось загрузить товары')
         setItems(Array.isArray(data) ? data : [])
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ошибка загрузки')
@@ -46,6 +32,9 @@ export default function ProductsGrid() {
 
     fetchProducts()
   }, [])
+
+  // Если выбран продукт — показываем детальный компонент
+  if (selectedId) return <ProductItem id={selectedId} />
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 md:px-6 lg:px-8">
@@ -66,10 +55,10 @@ export default function ProductsGrid() {
           {items.map((item) => (
             <div
               key={item.id ?? item.name}
-              className="rounded-xl bg-white p-4 shadow transition hover:-translate-y-1 hover:shadow-lg"
+              className="rounded-xl bg-white p-4 shadow transition hover:-translate-y-1 hover:shadow-lg cursor-pointer"
+              onClick={() => item.id && setSelectedId(item.id)}
             >
               {item.photos && item.photos[0] ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={item.photos[0]}
                   alt={item.name}
