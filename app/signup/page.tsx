@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
 import Header from '../components/Header'
+import { ApiClient } '../service/ApiClient'
 
-const API_URL = 'http://185.146.3.132:8080/api/v1/auth/sign-up'
 
 export default function SignInPage() {
 
@@ -20,22 +20,8 @@ export default function SignInPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-    try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          accept: '*/*',
-        },
-        body: JSON.stringify({name, phone, password }),
-      })
 
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        const message = data?.message || 'Ошибка авторизации'
-        throw new Error(message)
-      }
-
+    ApiClient.
       // сохраняем токен/имя, если есть
       const token = data?.token || data?.accessToken || data?.data?.token
       const userName =
@@ -120,8 +106,6 @@ export default function SignInPage() {
             {error}
           </div>
         )}
-
-       
 
           <div className="mt-6 text-center text-sm text-gray-500">
             <Link href="/" className="text-rose-600 hover:underline">

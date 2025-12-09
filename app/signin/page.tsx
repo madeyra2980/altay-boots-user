@@ -2,14 +2,14 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { ApiClient } from '../service/ApiClient'
 import Link from 'next/link'
 import Header from '../components/Header'
 
-const API_URL = 'http://185.146.3.132:8080/api/v1/auth/sign-in'
 
 export default function SignInPage() {
-  const [phone, setPhone] = useState('+77071112233')
-  const [password, setPassword] = useState('123456')
+  const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -18,44 +18,7 @@ export default function SignInPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-    try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          accept: '*/*',
-        },
-        body: JSON.stringify({ phone, password }),
-      })
-
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        const message = data?.message || 'Ошибка авторизации'
-        throw new Error(message)
-      }
-
-      // сохраняем токен/имя, если есть
-      const token = data?.token || data?.accessToken || data?.data?.token
-      type WithUser = { user?: { name?: string } }
-      const userName =
-        data?.name ||
-        data?.data?.name ||
-        (typeof data === 'object' && data !== null && 'user' in data
-          ? (data as WithUser).user?.name
-          : null) ||
-        phone
-      if (token && typeof window !== 'undefined') {
-        localStorage.setItem('token', token)
-        if (userName) localStorage.setItem('userName', String(userName))
-      }
-
-      // перейти на главную или остаться
-      router.push('/')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка запроса')
-    } finally {
-      setLoading(false)
-    }
+    const response = await ApiClient.Signin('/api/v1/auth/sign-in', { phone, password });
   }
 
   return (
@@ -74,11 +37,11 @@ export default function SignInPage() {
           <div>
             <label className="text-sm font-medium text-gray-700">Телефон</label>
             <input
-              type="tel"
+              type="text"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
-              placeholder="+77071112233"
+              placeholder=""
               required
             />
           </div>
