@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { signIn } from '../service/ApiClient'
 import Link from 'next/link'
 import Header from '../components/Header'
@@ -14,7 +14,7 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
     setLoading(true)

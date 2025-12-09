@@ -91,12 +91,12 @@ const Header = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/services" className="transition hover:text-yellow-300">
+                <Link href="/basket" className="transition hover:text-yellow-300">
                   Корзина
                 </Link>
               </li>
               <li>
-                <Link href="/gallery" className="transition hover:text-yellow-300">
+                <Link href="/my-orders" className="transition hover:text-yellow-300">
                   Мои заказы
                 </Link>
               </li>
