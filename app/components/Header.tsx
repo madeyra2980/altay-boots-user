@@ -1,20 +1,33 @@
 'use client'
 
 import Link from 'next/link'
-import React, { useSyncExternalStore } from 'react'
+import React, { useRef, useSyncExternalStore } from 'react'
 import Image from 'next/image'
 import logo from '../utils/logo.jpg'
 
 const Header = () => {
   const serverSnapshot = { isAuthed: false, userName: '' }
 
-  const getClientSnapshot = () => ({
-    isAuthed: Boolean(
-      typeof window !== 'undefined' ? localStorage.getItem('token') : null
-    ),
-    userName:
-      (typeof window !== 'undefined' && localStorage.getItem('userName')) || '',
-  })
+  const snapshotRef = useRef(serverSnapshot)
+
+  const getClientSnapshot = () => {
+    if (typeof window === 'undefined') return serverSnapshot
+
+    const next = {
+      isAuthed: Boolean(localStorage.getItem('token')),
+      userName: localStorage.getItem('userName') || '',
+    }
+
+    const cached = snapshotRef.current
+    if (
+      cached.isAuthed !== next.isAuthed ||
+      cached.userName !== next.userName
+    ) {
+      snapshotRef.current = next
+    }
+
+    return snapshotRef.current
+  }
 
   const getServerSnapshot = () => serverSnapshot
 
