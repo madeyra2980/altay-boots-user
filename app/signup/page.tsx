@@ -4,10 +4,10 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
 import Header from '../components/Header'
-import { ApiClient } '../service/ApiClient'
+import { signUp } from '../service/ApiClient'
 
 
-export default function SignInPage() {
+export default function SignUpPage() {
 
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -21,25 +21,15 @@ export default function SignInPage() {
     setError(null)
     setLoading(true)
 
-    ApiClient.
-      // сохраняем токен/имя, если есть
-      const token = data?.token || data?.accessToken || data?.data?.token
-      const userName =
-        data?.name ||
-        data?.data?.name ||
-        (typeof data === 'object' && data !== null && 'user' in data
-          ? (data as { user?: { name?: string } }).user?.name
-          : null) ||
-        name
-      if (token && typeof window !== 'undefined') {
-        localStorage.setItem('token', token)
-        if (userName) localStorage.setItem('userName', String(userName))
+    try {
+      const result = await signUp({ name, phone, password })
+      if (result.token && typeof window !== 'undefined') {
+        localStorage.setItem('token', result.token)
+        if (result.userName) localStorage.setItem('userName', String(result.userName))
       }
-
-      // перейти на главную или остаться
       router.push('/')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка запроса')
+      setError(err instanceof Error ? err.message : 'Ошибка регистрации')
     } finally {
       setLoading(false)
     }
@@ -76,7 +66,7 @@ export default function SignInPage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
-              placeholder="+77071112233"
+              placeholder=""
               required
             />
           </div>
@@ -97,7 +87,7 @@ export default function SignInPage() {
             disabled={loading}
             className="flex w-full items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:opacity-60"
           >
-            {loading ? 'Входим...' : 'Зарегестрироваться'}
+            {loading ? 'Регистрируем...' : 'Зарегистрироваться'}
           </button>
         </form>
 
@@ -110,8 +100,9 @@ export default function SignInPage() {
           <div className="mt-6 text-center text-sm text-gray-500">
             <Link href="/" className="text-rose-600 hover:underline">
               Вернуться на главную
-            </Link>
-            Войдите в систему <Link href="/signin" className="text-rose-600 hover:underline">здесь</Link>
+            </Link> 
+            <br />
+            Войдите в систему <Link href="/signin" className="text-rose-600 hover:underline"> здесь</Link>
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { ApiClient } from '../service/ApiClient'
+import { signIn } from '../service/ApiClient'
 import Link from 'next/link'
 import Header from '../components/Header'
 
@@ -18,7 +18,18 @@ export default function SignInPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-    const response = await ApiClient.Signin('/api/v1/auth/sign-in', { phone, password });
+    try {
+      const result = await signIn({ phone, password })
+      if (result.token && typeof window !== 'undefined') {
+        localStorage.setItem('token', result.token)
+        if (result.userName) localStorage.setItem('userName', String(result.userName))
+      }
+      router.push('/')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка входа')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -78,8 +89,8 @@ export default function SignInPage() {
             <Link href="/" className="text-rose-600 hover:underline">
               Вернуться на главную
             </Link>
-
-            Зарегистрироваться <Link href="/signup" className="text-rose-600 hover:underline">здесь</Link>
+            <br />
+            Зарегистрироваться <Link href="/signup" className="text-rose-600 hover:underline"> здесь</Link>
           </div>
         </div>
       </div>
