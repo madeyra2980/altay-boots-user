@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { useEffect, useMemo, useState, type SVGProps } from 'react'
 
 type Product = {
-  id?: number
+  product_id?: number
   catalog_id?: number
   name: string
   description?: string
@@ -66,9 +66,73 @@ export default function ProductPage() {
           },
         })
 
-        const data = await res.json()
-        if (!res.ok) throw new Error(data?.message || 'Не удалось загрузить товар')
-        setProduct(data as Product)
+        // Получаем текст ответа
+        const text = await res.text()
+        
+        // Логируем для отладки
+        console.log('Product fetch:', {
+          productId,
+          status: res.status,
+          statusText: res.statusText,
+          textLength: text.length,
+          hasToken: !!token,
+          url: `${API_URL}/${productId}`,
+          textPreview: text.substring(0, 100)
+        })
+        
+        if (!res.ok) {
+          // Пробуем распарсить как JSON для ошибки
+          if (text && text.trim()) {
+            try {
+              const errorData = JSON.parse(text)
+              const message = (errorData as { message?: string })?.message || 'Не удалось загрузить товар'
+              throw new Error(res.status === 403 
+                ? 'Доступ запрещен. Возможно, необходимо войти в аккаунт.'
+                : message)
+            } catch (err) {
+              // Если не JSON, показываем ошибку по статусу
+              if (err instanceof SyntaxError || !(err instanceof Error)) {
+                const statusText = res.status === 403 
+                  ? 'Доступ запрещен. Возможно, необходимо войти в аккаунт.'
+                  : res.statusText || 'Не удалось загрузить товар'
+                throw new Error(`Ошибка ${res.status}: ${statusText}`)
+              }
+              throw err
+            }
+          } else {
+            // Пустой ответ при ошибке
+            const statusText = res.status === 403 
+              ? 'Доступ запрещен. Возможно, необходимо войти в аккаунт.'
+              : res.status === 404
+              ? 'Товар не найден'
+              : res.statusText || 'Не удалось загрузить товар'
+            throw new Error(`Ошибка ${res.status}: ${statusText}`)
+          }
+        }
+        
+        // Успешный ответ - проверяем наличие данных
+        if (!text || text.trim() === '') {
+          // Если статус 200, но тело пустое - это проблема бэкенда
+          // Правильное поведение: 404 если товар не найден, 403 если нет доступа
+          console.error('Бэкенд вернул статус 200, но пустое тело. Это проблема сервера.')
+          throw new Error(`Товар с ID ${productId} не найден или недоступен. Сервер вернул пустой ответ (статус 200). Возможно, проблема на стороне сервера.`)
+        }
+        
+        try {
+          const data = JSON.parse(text) as Product
+          // Проверяем, что данные не пустые
+          if (!data || (!data.name && !data.product_id)) {
+            throw new Error('Товар не найден. Сервер вернул пустые данные.')
+          }
+          setProduct(data)
+        } catch (err) {
+          // Если не удалось распарсить, показываем ошибку
+          if (err instanceof SyntaxError) {
+            console.error('Ошибка парсинга JSON:', err, 'Текст ответа:', text.substring(0, 200))
+            throw new Error('Не удалось обработать данные товара. Сервер вернул неверный формат.')
+          }
+          throw err
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ошибка загрузки товара')
       } finally {
@@ -85,7 +149,7 @@ export default function ProductPage() {
   const handleAddToCart = async () => {
     setAddStatus(null)
     setError(null)
-    const numericId = Number(product?.id ?? productId)
+    const numericId = Number(product?.product_id ?? productId)
     if (!numericId || Number.isNaN(numericId)) {
       setAddStatus('Неизвестный товар')
       return
@@ -109,11 +173,16 @@ export default function ProductPage() {
         body: JSON.stringify({ productId: numericId, quantity: 1 }),
       })
 
-      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const message = (data as { message?: string })?.message || 'Не удалось добавить в корзину'
-        throw new Error(message)
+        try {
+          const errorData = await res.json()
+          throw new Error((errorData as { message?: string })?.message || 'Не удалось добавить в корзину')
+        } catch (e) {
+          // Если тело ответа не JSON или пустое, выбрасываем общую ошибку
+          throw new Error(`Ошибка ${res.status}: ${res.statusText || 'Не удалось добавить в корзину'}`)
+        }
       }
+
       setAddStatus('Товар добавлен в корзину')
     } catch (err) {
       setAddStatus(err instanceof Error ? err.message : 'Ошибка добавления')
@@ -233,4 +302,3 @@ export default function ProductPage() {
     </section>
   )
 }
-

@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 const API_URL = 'http://185.146.3.132:8080/api/v1/auth/products'
 
 type Product = {
-  id?: number
+  product_id?: number
   catalog_id?: number
   name: string
   description?: string
@@ -68,11 +68,9 @@ export default function ProductsGrid() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => {
             const productId =
-              typeof item.id === 'number'
-                ? item.id
-                : typeof item.catalog_id === 'number'
-                  ? item.catalog_id
-                  : null
+              typeof item.product_id === 'number'
+                ? item.product_id
+                : null
 
             const CardContent = () => (
               <>

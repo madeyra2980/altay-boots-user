@@ -34,7 +34,6 @@ export default function SignInPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       <div className="flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
         <div className="mb-6 space-y-1 text-center">

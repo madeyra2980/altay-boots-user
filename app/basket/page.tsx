@@ -1,40 +1,20 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 type CartItem = {
-  id?: number
+  cart_item_id?: number
   productId?: number
   productName?: string
   quantity?: number
-  price?: number
+  productPrice?: number
 }
 
 type CartResponse = {
   cartId?: number
   items?: CartItem[]
   totalPrice?: number
-}
-
-type OrderForm = {
-  surName: string
-  lastName: string
-  region: string
-  cityOrDistrict: string
-  street: string
-  houseOrApartment: string
-  index: string
-}
-
-const defaultOrderForm: OrderForm = {
-  surName: '',
-  lastName: '',
-  region: '',
-  cityOrDistrict: '',
-  street: '',
-  houseOrApartment: '',
-  index: '',
 }
 
 const CART_URL = 'http://185.146.3.132:8080/api/v1/user/cart'
@@ -44,14 +24,11 @@ export default function BasketPage() {
   const [totalPrice, setTotalPrice] = useState<number>(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [orderForm, setOrderForm] = useState<OrderForm>(defaultOrderForm)
-  const [orderStatus, setOrderStatus] = useState<string | null>(null)
-  const [ordering, setOrdering] = useState(false)
 
   const total = useMemo(() => {
     if (totalPrice) return totalPrice
     return items.reduce((sum, item) => {
-      const price = item.price ?? 0
+      const price = item.productPrice ?? 0
       const qty = item.quantity ?? 0
       return sum + price * qty
     }, 0)
@@ -69,6 +46,8 @@ export default function BasketPage() {
       setLoading(true)
       setError(null)
       try {
+        console.log('Fetching cart with token:', token ? 'Token exists' : 'No token')
+        
         const res = await fetch(CART_URL, {
           headers: {
             accept: '*/*',
@@ -76,16 +55,59 @@ export default function BasketPage() {
           },
         })
 
-        const data = (await res.json().catch(() => ({}))) as CartResponse | { message?: string }
+        console.log('Cart response:', {
+          status: res.status,
+          statusText: res.statusText,
+          headers: Object.fromEntries(res.headers.entries())
+        })
+
         if (!res.ok) {
-          const message = (data as { message?: string })?.message || 'Не удалось загрузить корзину'
+          if (res.status === 403) {
+            // Токен неверный или истек
+            console.error('403 Forbidden - token invalid or expired')
+            // Очищаем неверный токен
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('token')
+              localStorage.removeItem('userName')
+              // Триггерим событие для обновления Header
+              window.dispatchEvent(new Event('storage'))
+            }
+            setError('Доступ запрещен. Ваш токен истек или неверный. Пожалуйста, войдите заново.')
+            setLoading(false)
+            return
+          }
+          
+          const text = await res.text().catch(() => '')
+          let message = 'Не удалось загрузить корзину'
+          if (text && text.trim()) {
+            try {
+              const errorData = JSON.parse(text)
+              message = (errorData as { message?: string })?.message || message
+            } catch {
+              // Если не JSON, используем общее сообщение
+            }
+          }
           throw new Error(message)
         }
+        
+        const text = await res.text()
+        console.log('Cart response text:', text.substring(0, 200))
+        
+        if (!text || text.trim() === '') {
+          console.warn('Empty cart response')
+          setItems([])
+          setTotalPrice(0)
+          setLoading(false)
+          return
+        }
+        
+        const data = JSON.parse(text) as CartResponse
+        console.log('Parsed cart data:', data)
 
-        const body = data as CartResponse
-        setItems(Array.isArray(body.items) ? body.items : [])
-        setTotalPrice(body.totalPrice ?? 0)
+        setItems(Array.isArray(data.items) ? data.items : [])
+        setTotalPrice(data.totalPrice ?? 0)
       } catch (err) {
+        console.error('Error fetching cart:', err)
         setError(err instanceof Error ? err.message : 'Ошибка загрузки корзины')
       } finally {
         setLoading(false)
@@ -94,72 +116,6 @@ export default function BasketPage() {
 
     fetchCart()
   }, [])
-
-  const handleInput = (field: keyof OrderForm) => (e: ChangeEvent<HTMLInputElement>) => {
-    setOrderForm((prev) => ({ ...prev, [field]: e.target.value }))
-  }
-
-  const handleCreateOrder = async () => {
-    setOrderStatus(null)
-    if (!items.length) {
-      setOrderStatus('Добавьте товары в корзину')
-      return
-    }
-
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-    if (!token) {
-      setOrderStatus('Сначала войдите в аккаунт')
-      return
-    }
-
-    const payload = {
-      items: items.map((i) => ({
-        productId: i.productId,
-        quantity: i.quantity ?? 1,
-      })),
-      ...orderForm,
-    }
-
-    // простая проверка обязательных полей
-    if (
-      !payload.surName ||
-      !payload.lastName ||
-      !payload.region ||
-      !payload.cityOrDistrict ||
-      !payload.street ||
-      !payload.houseOrApartment ||
-      !payload.index
-    ) {
-      setOrderStatus('Заполните все поля для оформления заказа')
-      return
-    }
-
-    try {
-      setOrdering(true)
-      const res = await fetch('http://185.146.3.132:8080/api/v1/user/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          accept: '*/*',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      })
-
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        const message = (data as { message?: string })?.message || 'Не удалось оформить заказ'
-        throw new Error(message)
-      }
-
-      setOrderStatus('Заказ успешно оформлен')
-      setOrderForm(defaultOrderForm)
-    } catch (err) {
-      setOrderStatus(err instanceof Error ? err.message : 'Ошибка оформления заказа')
-    } finally {
-      setOrdering(false)
-    }
-  }
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-10 md:px-6 lg:px-8">
@@ -178,8 +134,16 @@ export default function BasketPage() {
 
       {loading && <div className="rounded-lg bg-white p-4 shadow">Загрузка корзины...</div>}
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow">
-          {error}
+        <div className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow">
+          <p>{error}</p>
+          {error.includes('Доступ запрещен') || error.includes('войдите') ? (
+            <Link
+              href="/signin"
+              className="inline-block rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700"
+            >
+              Войти в аккаунт
+            </Link>
+          ) : null}
         </div>
       )}
 
@@ -196,7 +160,7 @@ export default function BasketPage() {
               <div className="divide-y divide-gray-100">
                 {items.map((item) => {
                   return (
-                    <div key={item.id ?? `${item.productId}-${item.productName}`} className="flex gap-4 py-4">
+                    <div key={item.cart_item_id ?? `${item.productId}-${item.productName}`} className="flex gap-4 py-4">
                       <div className="flex flex-1 flex-col justify-center">
                         <div className="flex items-center justify-between gap-2">
                           <div>
@@ -208,7 +172,7 @@ export default function BasketPage() {
                             </p>
                           </div>
                           <span className="text-sm font-semibold text-rose-600">
-                            {item.price !== undefined ? `${item.price} ₸` : '—'}
+                            {item.productPrice !== undefined ? `${item.productPrice} ₸` : '—'}
                           </span>
                         </div>
                         <p className="text-xs text-gray-600">Количество: {item.quantity ?? 1}</p>
@@ -221,65 +185,6 @@ export default function BasketPage() {
               <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
                 <span className="text-sm text-gray-600">Итого</span>
                 <span className="text-xl font-bold text-gray-900">{total} ₸</span>
-              </div>
-
-              <div className="space-y-3 rounded-xl bg-gray-50 p-4">
-                <h2 className="text-lg font-semibold text-gray-900">Оформление заказа</h2>
-                <div className="grid gap-3 md:grid-cols-2">
-                  <input
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-rose-500"
-                    placeholder="Фамилия"
-                    value={orderForm.surName}
-                    onChange={handleInput('surName')}
-                  />
-                  <input
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-rose-500"
-                    placeholder="Имя"
-                    value={orderForm.lastName}
-                    onChange={handleInput('lastName')}
-                  />
-                  <input
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-rose-500"
-                    placeholder="Регион"
-                    value={orderForm.region}
-                    onChange={handleInput('region')}
-                  />
-                  <input
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-rose-500"
-                    placeholder="Город / район"
-                    value={orderForm.cityOrDistrict}
-                    onChange={handleInput('cityOrDistrict')}
-                  />
-                  <input
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-rose-500"
-                    placeholder="Улица"
-                    value={orderForm.street}
-                    onChange={handleInput('street')}
-                  />
-                  <input
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-rose-500"
-                    placeholder="Дом / квартира"
-                    value={orderForm.houseOrApartment}
-                    onChange={handleInput('houseOrApartment')}
-                  />
-                  <input
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-rose-500"
-                    placeholder="Индекс"
-                    value={orderForm.index}
-                    onChange={handleInput('index')}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <button
-                    onClick={handleCreateOrder}
-                    disabled={ordering}
-                    className="w-full rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    {ordering ? 'Отправляем...' : 'Оформить заказ'}
-                  </button>
-                  {orderStatus && <p className="text-sm text-gray-700">{orderStatus}</p>}
-                </div>
               </div>
             </div>
           )}
