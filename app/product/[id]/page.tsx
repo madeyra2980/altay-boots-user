@@ -203,141 +203,186 @@ export default function ProductPage() {
   }
 
   return (
-    <section >
-      <div >
- 
+    <section className="min-h-screen bg-[#fafaf9] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
         <Link
           href="/"
-          
+          className="inline-flex items-center text-stone-500 hover:text-stone-800 transition-colors mb-8 group"
         >
-          ← Вернуться к каталогу
+          <svg 
+            className="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Вернуться к каталогу
         </Link>
       </div>
 
-      {loading && <div >Загрузка товара...</div>}
+      {loading && (
+        <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-800"></div>
+        </div>
+      )}
+      
       {error && (
-        <div >
+        <div className="max-w-2xl mx-auto p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
         </div>
       )}
 
       {!loading && !error && product && (
-        <div >
-          <div >
-            {/* Main Photo Slider */}
-            <div >
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+          {/* Photos Column */}
+          <div className="space-y-6">
+            {/* Main Photo Frame */}
+            <div className="relative aspect-square bg-stone-100 rounded-2xl overflow-hidden shadow-sm group">
               {allPhotos.length > 0 ? (
-                <div >
+                <>
                   <img
                     src={allPhotos[activePhotoIndex]}
                     alt={product.name}
-                    
+                    className="w-full h-full object-cover object-center transform transition duration-500 ease-in-out group-hover:scale-105"
                   />
                   
-                  {/* Arrows */}
+                  {/* Navigation Arrows */}
                   {allPhotos.length > 1 && (
                     <>
                       <button
                         onClick={() => setActivePhotoIndex(prev => (prev === 0 ? allPhotos.length - 1 : prev - 1))}
-                        
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-all opacity-0 group-hover:opacity-100"
+                        aria-label="Previous image"
                       >
-                         <svg  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <svg className="w-6 h-6 text-stone-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                          </svg>
                       </button>
                       <button
                         onClick={() => setActivePhotoIndex(prev => (prev + 1) % allPhotos.length)}
-                        
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-all opacity-0 group-hover:opacity-100"
+                        aria-label="Next image"
                       >
-                         <svg  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <svg className="w-6 h-6 text-stone-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                          </svg>
                       </button>
                     </>
                   )}
-                </div>
+                </>
               ) : (
-                <div >
-                  Нет фото
+                <div className="w-full h-full flex items-center justify-center text-stone-400">
+                  <span className="text-lg">Нет фото</span>
                 </div>
               )}
             </div>
 
             {/* Thumbnails */}
             {allPhotos.length > 1 && (
-              <div >
+              <div className="grid grid-cols-5 gap-4">
                 {allPhotos.map((photo, idx) => (
                   <button
                     key={idx}
                     onClick={() => setActivePhotoIndex(idx)}
-
+                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                      activePhotoIndex === idx 
+                        ? 'border-stone-800 shadow-md ring-1 ring-stone-800/20' 
+                        : 'border-transparent hover:border-stone-300'
+                    }`}
                   >
-                    <img src={photo} alt=""  />
+                    <img 
+                      src={photo} 
+                      alt="" 
+                      className="w-full h-full object-cover"
+                    />
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          <div >
-            <div>
-              <h2 >{product.name}</h2>
+          {/* Product Info Column */}
+          <div className="flex flex-col pt-2 lg:pt-0">
+            <div className="border-b border-stone-200 pb-8 mb-8">
+              <h1 className="text-3xl sm:text-4xl font-serif text-stone-900 mb-4 tracking-tight">
+                {product.name}
+              </h1>
               {product.description && (
-                <p >{product.description}</p>
+                <p className="text-lg text-stone-600 leading-relaxed font-light">
+                  {product.description}
+                </p>
               )}
             </div>
 
             {(product.price !== undefined || product.oldPrice !== undefined) && (
-              <div >
+              <div className="flex items-baseline gap-4 mb-8">
                 {product.price !== undefined && (
-                  <span >{product.price} ₸</span>
+                  <span className="text-3xl font-medium text-stone-900">
+                    {product.price.toLocaleString()} ₸
+                  </span>
                 )}
                 {product.oldPrice !== undefined && (
-                  <span >{product.oldPrice} ₸</span>
+                  <span className="text-xl text-stone-400 line-through decoration-stone-400/60">
+                    {product.oldPrice.toLocaleString()} ₸
+                  </span>
                 )}
               </div>
             )}
 
-            {product.text && (
-              <div >
-                <h3 >Описание</h3>
-                <p >
-                  {product.text}
-                </p>
-              </div>
-            )}
+            <div className="space-y-8 flex-grow">
+              {product.text && (
+                <div className="prose prose-stone max-w-none text-stone-600">
+                  <h3 className="text-stone-900 font-medium mb-2">Описание</h3>
+                  <p className="whitespace-pre-line leading-relaxed">
+                    {product.text}
+                  </p>
+                </div>
+              )}
 
-            <div >
-              <button
-                onClick={handleAddToCart}
-                disabled={adding}
-                
-              >
-                {adding ? 'Добавление...' : 'Добавить в корзину'}
-                <CartIcon  />
-              </button>
-              {addStatus && (
-                <p >
-                  {addStatus}
-                  {addStatus === 'Товар добавлен в корзину' && (
+              <div className="bg-stone-50 p-6 rounded-xl border border-stone-100 space-y-4">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={adding}
+                  className="w-full flex items-center justify-center gap-3 bg-stone-900 hover:bg-stone-800 disabled:bg-stone-300 disabled:cursor-not-allowed text-stone-50 px-8 py-4 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl active:scale-[0.98]"
+                >
+                  {adding ? (
+                    'Добавление...'
+                  ) : (
                     <>
-                      {' '}
-                      <Link href="/basket" >
-                        Открыть корзину
-                      </Link>
+                      Добавить в корзину
+                      <CartIcon className="w-5 h-5" />
                     </>
                   )}
-                </p>
-              )}
+                </button>
+                
+                {addStatus && (
+                  <div className={`text-sm text-center p-3 rounded-lg ${
+                    addStatus === 'Товар добавлен в корзину' 
+                      ? 'bg-green-50 text-green-700 border border-green-100' 
+                      : 'bg-stone-100 text-stone-600'
+                  }`}>
+                    <span className="mr-1">{addStatus}</span>
+                    {addStatus === 'Товар добавлен в корзину' && (
+                      <Link href="/basket" className="font-medium underline hover:text-green-800 ml-1">
+                        Открыть корзину
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {!loading && !error && !product && (
-        <div >
-          <p >Товар не найден</p>
-          <Link href="/" >
+        <div className="text-center py-20">
+          <p className="text-xl text-stone-500 mb-6">Товар не найден</p>
+          <Link 
+            href="/" 
+            className="inline-block bg-stone-900 text-white px-6 py-3 rounded-lg hover:bg-stone-800 transition-colors"
+          >
             Вернуться на главную
           </Link>
         </div>

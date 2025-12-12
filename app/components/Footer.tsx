@@ -15,7 +15,7 @@ type CompanyData = {
 }
 
 const normalizePhoto = (url?: string) => {
-  if (!url) return ''
+  if (!url) return logo
   return url.startsWith('http') ? url : `http://185.146.3.132:8080${url}`
 }
 
@@ -45,15 +45,7 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="space-y-8 xl:col-span-1">
             <div className="flex items-center gap-3">
-              <div className="relative h-10 w-10 overflow-hidden rounded-lg bg-stone-800">
-                <Image
-                  src={logo}
-                  alt='Company Logo'
-                  width={40}
-                  height={40}
-                  className="object-cover"
-                />
-              </div>
+         
               <span className="text-xl font-bold tracking-tight text-white">
                 {company?.name || 'Altay Boots'}
               </span>
