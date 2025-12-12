@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import ConfirmAlert from '../components/ui/ConfirmAlert'
+import Loading from '../components/ui/Loading'
 
 type OrderItem = {
   productId?: number
@@ -27,6 +29,11 @@ export default function MyOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Delete handling
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [deletingOrderId, setDeletingOrderId] = useState<number | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const sortedOrders = useMemo(() => {
     return [...orders].sort((a, b) => {
@@ -45,10 +52,6 @@ export default function MyOrdersPage() {
         setLoading(false)
         return
       }
-
-      const userId = typeof window !== 'undefined' 
-        ? localStorage.getItem('user_id') || localStorage.getItem('userId') || '7'
-        : '7'
 
       setLoading(true)
       setError(null)
@@ -77,10 +80,9 @@ export default function MyOrdersPage() {
     fetchOrders()
   }, [])
 
-  const [deletingOrderId, setDeletingOrderId] = useState<number | null>(null)
-
   const confirmDelete = (orderId: number) => {
     setDeletingOrderId(orderId)
+    setIsConfirmOpen(true)
   }
 
   const handleDelete = async () => {
@@ -89,11 +91,15 @@ export default function MyOrdersPage() {
     const token = localStorage.getItem('token')
     if (!token) {
       setError('Вы не авторизованы')
-      setDeletingOrderId(null)
+      setIsConfirmOpen(false)
       return
     }
 
+    setIsDeleting(true)
     try {
+      // Artificial delay
+      await new Promise(resolve => setTimeout(resolve, 3000))
+
       const res = await fetch(`http://185.146.3.132:8080/api/v1/user/delete-order/${deletingOrderId}`, {
         method: 'DELETE',
         headers: {
@@ -107,136 +113,155 @@ export default function MyOrdersPage() {
       }
 
       setOrders((prev) => prev.filter((o) => o.order_id !== deletingOrderId))
+      setIsConfirmOpen(false)
     } catch (err) {
       console.error(err)
       alert(err instanceof Error ? err.message : 'Ошибка при удалении заказа')
     } finally {
+      setIsDeleting(false)
       setDeletingOrderId(null)
     }
   }
 
+  if (loading) {
+     return <Loading fullScreen />
+  }
+
   return (
-    <section className="mx-auto max-w-5xl px-4 py-10 md:px-6 lg:px-8">
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div>
-              <Link
-          href="/"
-          className="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:-translate-y-0.5 hover:border-rose-500 hover:text-rose-600"
-        >
-          ← Каталог
-        </Link>
-        
+    <section className="min-h-screen bg-stone-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <Link
+            href="/"
+            className="group flex items-center text-sm font-medium text-stone-500 hover:text-stone-900 transition-colors"
+          >
+            <svg className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Каталог
+          </Link>
+          <h1 className="text-3xl font-bold text-stone-900 border-l-4 border-orange-500 pl-4">Мои заказы</h1>
         </div>
-    
-      </div>
 
-      {/* Confirmation Modal */}
-      {deletingOrderId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl animate-in fade-in zoom-in duration-200">
-            
-            <h3 className="text-lg font-semibold text-gray-900">Удалить заказ?</h3>
-            <p className="mt-2 text-sm text-gray-500">
-              Вы уверены, что хотите удалить заказ #{deletingOrderId}? Это действие нельзя отменить.
+        {/* Confirmation Modal */}
+        <ConfirmAlert 
+           isOpen={isConfirmOpen}
+           title="Удалить заказ?"
+           message={`Вы уверены, что хотите удалить заказ #${deletingOrderId}? Это действие нельзя отменить.`}
+           onConfirm={handleDelete}
+           onCancel={() => setIsConfirmOpen(false)}
+           isLoading={isDeleting}
+           confirmText="Да, удалить"
+           cancelText="Отмена"
+           type="danger"
+        />
+
+        {error && (
+          <div className="rounded-lg bg-red-50 p-4 border border-red-200 text-center mb-8">
+            <p className="text-red-800 flex items-center justify-center gap-2">
+               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+               {error}
             </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => setDeletingOrderId(null)}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={handleDelete}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-              >
-                Удалить
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {loading && <div className="rounded-lg bg-white p-4 shadow">Загрузка заказов...</div>}
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow">
-          {error}
-        </div>
-      )}
-
-      {!loading && !error && (
-        <div className="space-y-4">
-          {!sortedOrders.length && (
-            <div className="rounded-2xl bg-white p-6 text-gray-600 shadow">
-              Заказы не найдены.
-            </div>
-          )}
-
-          {sortedOrders.map((order, idx) => {
-            const date =
-              order.orderStartDate && !Number.isNaN(Date.parse(order.orderStartDate))
-                ? new Date(order.orderStartDate).toLocaleString()
-                : '—'
-            const status = order.paidStatus || '—'
-            const orderId = order.order_id ?? idx + 1
-
-            return (
-              <div key={`${order.orderStartDate}-${idx}`} className="space-y-3 rounded-2xl bg-white p-6 shadow">
-                
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="space-y-1">
-                    <p className="text-sm text-gray-500">Заказ #{orderId}</p>
-                    <p className="text-sm text-gray-500">Дата: {date}</p>
-                    <p className="text-sm text-gray-500">Статус оплаты: 
-                      {status === 'PAID' ? ' Оплачено' : ' Не оплачено'}
-                    </p>
-                  </div>
-                   {order.order_id && (
-                    <button
-                      onClick={() => confirmDelete(order.order_id!)}
-                      className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100"
-                    >
-                      Удалить
-                    </button>
-                  )}
-                </div>
-
-                <div className="rounded-xl bg-gray-50 p-4">
-                  {order.items && order.items.length ? (
-                    <ul className="space-y-2">
-                      {order.items.map((item, iIdx) => {
-                        const info = item.productInfo
-                        const name = info?.productName ?? `Товар #${info?.productId ?? item.productId ?? '—'}`
-                        const price = info?.productPrice
-                        return (
-                          <li
-                            key={`${info?.productId ?? item.productId}-${iIdx}`}
-                            className="flex items-center justify-between text-sm text-gray-800"
-                          >
-                            <div className="space-y-0.5">
-                              <span className="font-semibold text-gray-900">{name}</span>
-                              {info?.catalogName && (
-                                <p className="text-xs text-gray-500">Категория: {info.catalogName}</p>
-                              )}
-                            </div>
-                            <div className="text-right text-sm text-gray-700">
-                              {price !== undefined && <p className="font-semibold text-rose-600">{price} ₸</p>}
-                              <p className="text-xs text-gray-500">Количество: {item.quantity ?? 1}</p>
-                            </div>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-gray-600">Нет позиций в заказе</p>
-                  )}
+        {!loading && !error && (
+          <div className="space-y-6">
+            {!sortedOrders.length && (
+              <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-stone-200">
+                <svg className="mx-auto h-12 w-12 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                <h3 className="mt-2 text-sm font-medium text-stone-900">Нет заказов</h3>
+                <p className="mt-1 text-sm text-stone-500">Начните делать покупки, чтобы увидеть историю заказов.</p>
+                <div className="mt-6">
+                  <Link href="/" className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                    Перейти в каталог
+                  </Link>
                 </div>
               </div>
-            )
-          })}
-        </div>
-      )}
+            )}
+
+            {sortedOrders.map((order, idx) => {
+              const date =
+                order.orderStartDate && !Number.isNaN(Date.parse(order.orderStartDate))
+                  ? new Date(order.orderStartDate).toLocaleString()
+                  : '—'
+              const isPaid = order.paidStatus === 'PAID'
+              const orderId = order.order_id ?? idx + 1
+
+              return (
+                <div 
+                   key={`${order.orderStartDate}-${idx}`} 
+                   className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden hover:shadow-md transition-shadow duration-300"
+                >
+                  <div className="px-6 py-4 border-b border-stone-100 bg-stone-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-3">
+                         <h3 className="text-lg font-bold text-stone-900">Заказ #{orderId}</h3>
+                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium 
+                           ${isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                           {isPaid ? 'Оплачено' : 'Ожидает оплаты'}
+                         </span>
+                      </div>
+                      <p className="text-sm text-stone-500 flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        {date}
+                      </p>
+                    </div>
+                     {order.order_id && (
+                      <button
+                        onClick={() => confirmDelete(order.order_id!)}
+                        className="text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                        title="Удалить заказ из истории"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        Удалить
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="px-6 py-6">
+                    {order.items && order.items.length ? (
+                      <ul className="divide-y divide-stone-100">
+                        {order.items.map((item, iIdx) => {
+                          const info = item.productInfo
+                          const name = info?.productName ?? `Товар #${info?.productId ?? item.productId ?? '—'}`
+                          const price = info?.productPrice
+                          return (
+                            <li
+                              key={`${info?.productId ?? item.productId}-${iIdx}`}
+                              className="py-4 flex items-center justify-between group"
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-400">
+                                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-stone-900 group-hover:text-orange-600 transition-colors cursor-default">{name}</p>
+                                  {info?.catalogName && (
+                                    <p className="text-xs text-stone-500">Категория: {info.catalogName}</p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                {price !== undefined && <p className="font-bold text-stone-900">{price} ₸</p>}
+                                <p className="text-sm text-stone-500">x{item.quantity ?? 1}</p>
+                              </div>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    ) : (
+                      <p className="text-stone-500 italic text-sm">Нет позиций в заказе</p>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </section>
   )
 }
-

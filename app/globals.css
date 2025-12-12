@@ -1,10 +1,37 @@
 @import "tailwindcss";
 
+@layer base {
+    :root {
+        --background: #fafaf9;
+        /* stone-50 */
+        --foreground: #1c1917;
+        /* stone-900 */
+    }
 
+    body {
+        color: var(--foreground);
+        background: var(--background);
+        @apply antialiased leading-relaxed;
+    }
+}
 
+/* Custom Scrollbar using standard CSS as @apply might be tricky in some contexts if not configured, but should work */
+::-webkit-scrollbar {
+    width: 8px;
+}
 
+::-webkit-scrollbar-track {
+    background: #f5f5f4;
+    /* stone-100 */
+}
 
+::-webkit-scrollbar-thumb {
+    background: #d6d3d1;
+    /* stone-300 */
+    border-radius: 9999px;
+}
 
-body {
-
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a29e;
+    /* stone-400 */
 }

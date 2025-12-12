@@ -4,6 +4,7 @@ import Link from 'next/link'
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Image from 'next/image'
 import logo from '../utils/logo.jpg'
+import Loading from './ui/Loading'
 
 type CompanyData = {
   company_id: number
@@ -21,6 +22,8 @@ const normalizePhoto = (url?: string) => {
 
 const Header = () => {
   const [company, setCompany] = useState<CompanyData | null>(null)
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const serverSnapshot = { isAuthed: false, userId: '', cartCount: 0 }
 
   const snapshotRef = useRef(serverSnapshot)
@@ -37,6 +40,12 @@ const Header = () => {
     }
 
     fetchCompany()
+    
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   const getClientSnapshot = () => {
@@ -75,7 +84,11 @@ const Header = () => {
     getServerSnapshot
   )
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+    // Artificial delay for "liveness"
+    await new Promise(resolve => setTimeout(resolve, 3000))
+
     localStorage.removeItem('token')
     localStorage.removeItem('userName')
     localStorage.removeItem('userId')
@@ -83,105 +96,97 @@ const Header = () => {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('storage'))
     }
+    setIsLoggingOut(false)
+    window.location.href = '/'
   }
 
   return (
-    <header className="relative w-full overflow-hidden text-white bg-gradient-to-r from-[#b7002b]/90 via-[#e00035]/85 to-[#ff0040]/80">
-      <div 
-        className="absolute inset-0 bg-center bg-cover bg-no-repeat mix-blend-multiply"
-        style={{
-          backgroundImage: company?.photoURL 
-            ? `url(${normalizePhoto(company.photoURL)})` 
-            : "url('https://www.shutterstock.com/image-photo/man-boots-deep-snow-winter-260nw-2341564623.jpg')"
-        }}
-      />
-      <div className="absolute inset-0" />
+    <>
+      {isLoggingOut && <Loading fullScreen />}
+      <header className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-md shadow-sm' : 'bg-white'}`}>
+        {/* Top Bar - decorative or utility */}
+        <div className="bg-stone-900 text-stone-200 text-xs py-1.5 px-4 text-center tracking-wide uppercase">
+          <p>{company?.text || 'Premium Handcrafted Boots'}</p>
+        </div>
 
-      <div className="relative mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-6 lg:px-8">
-        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-          <div className="flex items-center gap-4">
-            <div className="flex h-32 w-32 items-center justify-center rounded-full border-2 border-white/40 bg-white/10 p-1">
-              {company?.photoURL ? (
-                <Image
-                  src={logo}
-                  alt='Company Logo'
-                  className="h-full w-full rounded-full object-cover"
-                />
-              ) : (
-                <div className="h-full w-full rounded-full bg-white/20 animate-pulse" />
-              )}
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            
+            {/* Logo Area */}
+            <div className="flex-shrink-0 flex items-center gap-3">
+              <Link href="/" className="flex items-center gap-3 group">
+                <div className="relative h-10 w-10 overflow-hidden rounded-lg shadow-inner ring-1 ring-stone-900/10">
+                  {company?.photoURL ? (
+                    <img
+                      src={normalizePhoto(company.photoURL)}
+                      alt='Company Logo'
+                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="h-full w-full bg-orange-600 flex items-center justify-center text-white font-bold">AB</div>
+                  )}
+                </div>
+                <span className="text-xl font-bold tracking-tight text-stone-900 group-hover:text-orange-700 transition-colors">
+                  {company?.name || 'ALTAY BOOTS'}
+                </span>
+              </Link>
             </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-extrabold leading-tight md:text-3xl">
-                {company?.name || 'ALTAY BOOTS'}
-              </span>
-            </div>
-          </div>
 
-          <nav className="rounded-full bg-black/30 px-5 py-2 text-xs font-medium uppercase tracking-wide shadow md:px-8 md:text-sm">
-            <ul className="flex flex-wrap items-center gap-4 md:gap-6">
-              <li>
-                <Link href="/" className="transition hover:text-yellow-300">
-                  Главная
-                </Link>
-              </li>
-           
-              <li>
-                <Link href="/basket" className="group relative inline-flex items-center gap-2 transition hover:text-yellow-300">
-                  <span>Корзина</span>
-                  {cartCount > 0 && (
-                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-yellow-300 px-2 text-xs font-bold text-black transition group-hover:scale-105">
-                      {cartCount}
+            {/* Navigation */}
+            <nav className="hidden md:flex space-x-8">
+              <Link href="/" className="text-sm font-medium text-stone-600 hover:text-orange-600 transition-colors">
+                Главная
+              </Link>
+              <Link href="/my-orders" className="text-sm font-medium text-stone-600 hover:text-orange-600 transition-colors">
+                Мои заказы
+              </Link>
+              <Link href="/contacts" className="text-sm font-medium text-stone-600 hover:text-orange-600 transition-colors">
+                Контакты
+              </Link>
+            </nav>
+
+            {/* User Actions */}
+            <div className="flex items-center gap-6">
+              <Link href="/basket" className="group relative flex items-center gap-2 text-stone-600 hover:text-orange-600 transition-colors">
+                <span className="sr-only">Корзина</span>
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-orange-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-white group-hover:scale-110 transition-transform">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+
+              <div className="border-l border-stone-200 h-6 mx-1"></div>
+
+              {isAuthed ? (
+                <div className="flex items-center gap-3">
+                  {userId && (
+                    <span className="hidden lg:block text-xs font-medium text-stone-400">
+                      {userId}
                     </span>
                   )}
-                </Link>
-              </li>
-              <li>
-                <Link href="/my-orders" className="transition hover:text-yellow-300">
-                  Мои заказы
-                </Link>
-              </li>
-              <li>
-                <Link href="/contacts" className="transition hover:text-yellow-300">
-                  Контакты
-                </Link>
-              </li>
-              <li>
-                {isAuthed ? (
-                  <div className="flex items-center gap-3">
-                    {userId && (
-                      <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold">
-                        {userId}
-                      </span>
-                    )}
-                    <button
-                      onClick={handleLogout}
-                      className="rounded-full border border-white/40 px-4 py-1 text-xs font-semibold uppercase tracking-wide transition hover:border-yellow-300 hover:text-yellow-300"
-                    >
-                      Выйти
-                    </button>
-                  </div>
-                ) : (
-                  <Link href="/signin" className="transition hover:text-yellow-300">
+                  <button
+                    onClick={handleLogout}
+                    className="text-sm font-semibold text-stone-900 hover:text-orange-600 transition-colors"
+                  >
+                    Выйти
+                  </button>
+                </div>
+              ) : (
+                  <Link href="/signin" className="text-sm font-semibold text-stone-900 hover:text-orange-600 transition-colors">
                     Войти
                   </Link>
-                )}
-              </li>
-            </ul>
-          </nav>
+              )}
+            </div>
+          </div>
         </div>
-
-        <div className="max-w-lg space-y-2 text-left uppercase leading-tight">
-          <p className="text-2xl font-extrabold md:text-3xl lg:text-4xl">
-            {company?.text || 'Брендовые ботинки'}
-          </p>
-          <p className="text-xl font-bold md:text-2xl lg:text-3xl text-yellow-300">
-            {company?.city && company?.base && `${company.city}, ${company.base}`}
-          </p>
-        </div>
-      </div>
-    </header>
+      </header>
+    </>
   )
 }
+
 
 export default Header

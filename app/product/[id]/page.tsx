@@ -203,35 +203,35 @@ export default function ProductPage() {
   }
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-10 md:px-6 lg:px-8">
-      <div className="mb-6 flex items-center justify-between gap-4">
+    <section >
+      <div >
  
         <Link
           href="/"
-          className="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:-translate-y-0.5 hover:border-rose-500 hover:text-rose-600"
+          
         >
           ← Вернуться к каталогу
         </Link>
       </div>
 
-      {loading && <div className="rounded-lg bg-white p-4 shadow">Загрузка товара...</div>}
+      {loading && <div >Загрузка товара...</div>}
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow">
+        <div >
           {error}
         </div>
       )}
 
       {!loading && !error && product && (
-        <div className="grid gap-8 rounded-2xl bg-white p-6 shadow md:grid-cols-2">
-          <div className="space-y-4">
+        <div >
+          <div >
             {/* Main Photo Slider */}
-            <div className="relative overflow-hidden rounded-2xl bg-gray-100">
+            <div >
               {allPhotos.length > 0 ? (
-                <div className="relative aspect-square w-full sm:aspect-[4/3]">
+                <div >
                   <img
                     src={allPhotos[activePhotoIndex]}
                     alt={product.name}
-                    className="h-full w-full object-cover transition-opacity duration-300"
+                    
                   />
                   
                   {/* Arrows */}
@@ -239,17 +239,17 @@ export default function ProductPage() {
                     <>
                       <button
                         onClick={() => setActivePhotoIndex(prev => (prev === 0 ? allPhotos.length - 1 : prev - 1))}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 shadow-md backdrop-blur transition hover:bg-white"
+                        
                       >
-                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <svg  fill="none" viewBox="0 0 24 24" stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                          </svg>
                       </button>
                       <button
                         onClick={() => setActivePhotoIndex(prev => (prev + 1) % allPhotos.length)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 shadow-md backdrop-blur transition hover:bg-white"
+                        
                       >
-                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <svg  fill="none" viewBox="0 0 24 24" stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                          </svg>
                       </button>
@@ -257,7 +257,7 @@ export default function ProductPage() {
                   )}
                 </div>
               ) : (
-                <div className="flex aspect-square w-full items-center justify-center text-gray-400 sm:aspect-[4/3]">
+                <div >
                   Нет фото
                 </div>
               )}
@@ -265,66 +265,64 @@ export default function ProductPage() {
 
             {/* Thumbnails */}
             {allPhotos.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+              <div >
                 {allPhotos.map((photo, idx) => (
                   <button
                     key={idx}
                     onClick={() => setActivePhotoIndex(idx)}
-                    className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
-                      activePhotoIndex === idx ? 'border-rose-600 ring-2 ring-rose-100' : 'border-transparent opacity-70 hover:opacity-100'
-                    }`}
+
                   >
-                    <img src={photo} alt="" className="h-full w-full object-cover" />
+                    <img src={photo} alt=""  />
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="space-y-4">
+          <div >
             <div>
-              <h2 className="text-2xl font-semibold text-gray-900">{product.name}</h2>
+              <h2 >{product.name}</h2>
               {product.description && (
-                <p className="mt-2 text-sm text-gray-600">{product.description}</p>
+                <p >{product.description}</p>
               )}
             </div>
 
             {(product.price !== undefined || product.oldPrice !== undefined) && (
-              <div className="flex items-center gap-3">
+              <div >
                 {product.price !== undefined && (
-                  <span className="text-3xl font-bold text-rose-600">{product.price} ₸</span>
+                  <span >{product.price} ₸</span>
                 )}
                 {product.oldPrice !== undefined && (
-                  <span className="text-lg text-gray-400 line-through">{product.oldPrice} ₸</span>
+                  <span >{product.oldPrice} ₸</span>
                 )}
               </div>
             )}
 
             {product.text && (
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900">Описание</h3>
-                <p className="rounded-lg bg-gray-50 p-4 text-sm leading-relaxed text-gray-700">
+              <div >
+                <h3 >Описание</h3>
+                <p >
                   {product.text}
                 </p>
               </div>
             )}
 
-            <div className="space-y-2">
+            <div >
               <button
                 onClick={handleAddToCart}
                 disabled={adding}
-                className="flex w-fit items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
+                
               >
                 {adding ? 'Добавление...' : 'Добавить в корзину'}
-                <CartIcon className="h-4 w-4" />
+                <CartIcon  />
               </button>
               {addStatus && (
-                <p className="text-sm text-gray-600">
+                <p >
                   {addStatus}
                   {addStatus === 'Товар добавлен в корзину' && (
                     <>
                       {' '}
-                      <Link href="/basket" className="text-rose-600 underline">
+                      <Link href="/basket" >
                         Открыть корзину
                       </Link>
                     </>
@@ -337,9 +335,9 @@ export default function ProductPage() {
       )}
 
       {!loading && !error && !product && (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-lg text-gray-500">Товар не найден</p>
-          <Link href="/" className="mt-4 text-rose-600 hover:underline">
+        <div >
+          <p >Товар не найден</p>
+          <Link href="/" >
             Вернуться на главную
           </Link>
         </div>
