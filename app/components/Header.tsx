@@ -1,27 +1,58 @@
 'use client'
 
 import Link from 'next/link'
-import React, { useRef, useSyncExternalStore } from 'react'
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Image from 'next/image'
 import logo from '../utils/logo.jpg'
 
+type CompanyData = {
+  company_id: number
+  name: string
+  text: string
+  photoURL: string
+  base: string
+  city: string
+}
+
+const normalizePhoto = (url?: string) => {
+  if (!url) return ''
+  return url.startsWith('http') ? url : `http://185.146.3.132:8080${url}`
+}
+
 const Header = () => {
-  const serverSnapshot = { isAuthed: false, userName: '' }
+  const [company, setCompany] = useState<CompanyData | null>(null)
+  const serverSnapshot = { isAuthed: false, userId: '', cartCount: 0 }
 
   const snapshotRef = useRef(serverSnapshot)
+
+  useEffect(() => {
+    const fetchCompany = async () => {
+      try {
+        const res = await fetch('http://185.146.3.132:8080/api/v1/auth/company')
+        const data = await res.json()
+        setCompany(data)
+      } catch (error) {
+        console.error('Error fetching company data:', error)
+      }
+    }
+
+    fetchCompany()
+  }, [])
 
   const getClientSnapshot = () => {
     if (typeof window === 'undefined') return serverSnapshot
 
     const next = {
       isAuthed: Boolean(localStorage.getItem('token')),
-      userName: localStorage.getItem('userName') || '',
+      userId: localStorage.getItem('userId') || '',
+      cartCount: Number(localStorage.getItem('cartCount') || '0') || 0,
     }
 
     const cached = snapshotRef.current
     if (
       cached.isAuthed !== next.isAuthed ||
-      cached.userName !== next.userName
+      cached.userId !== next.userId ||
+      cached.cartCount !== next.cartCount
     ) {
       snapshotRef.current = next
     }
@@ -38,7 +69,7 @@ const Header = () => {
     return () => window.removeEventListener('storage', handler)
   }
 
-  const { isAuthed, userName } = useSyncExternalStore(
+  const { isAuthed, userId, cartCount } = useSyncExternalStore(
     subscribe,
     getClientSnapshot,
     getServerSnapshot
@@ -47,7 +78,8 @@ const Header = () => {
   const handleLogout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('userName')
-    // force re-render by touching storage event: update dummy key
+    localStorage.removeItem('userId')
+    localStorage.removeItem('cartCount')
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('storage'))
     }
@@ -55,25 +87,33 @@ const Header = () => {
 
   return (
     <header className="relative w-full overflow-hidden text-white bg-gradient-to-r from-[#b7002b]/90 via-[#e00035]/85 to-[#ff0040]/80">
-      <div className="absolute inset-0 bg-center bg-cover bg-no-repeat mix-blend-multiply bg-[url('https://www.shutterstock.com/image-photo/man-boots-deep-snow-winter-260nw-2341564623.jpg')]" />
+      <div 
+        className="absolute inset-0 bg-center bg-cover bg-no-repeat mix-blend-multiply"
+        style={{
+          backgroundImage: company?.photoURL 
+            ? `url(${normalizePhoto(company.photoURL)})` 
+            : "url('https://www.shutterstock.com/image-photo/man-boots-deep-snow-winter-260nw-2341564623.jpg')"
+        }}
+      />
       <div className="absolute inset-0" />
 
       <div className="relative mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-6 lg:px-8">
-        {/* Top row: logo + brand, navigation */}
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
           <div className="flex items-center gap-4">
-          <div className="flex h-36 w-36 items-center justify-center rounded-full">
-              <Image
-                src={logo}
-                alt="Altay Boots"
-
-                className="h-full w-full border-2  rounded-full"
-              />
+            <div className="flex h-32 w-32 items-center justify-center rounded-full border-2 border-white/40 bg-white/10 p-1">
+              {company?.photoURL ? (
+                <Image
+                  src={logo}
+                  alt='Company Logo'
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
+                <div className="h-full w-full rounded-full bg-white/20 animate-pulse" />
+              )}
             </div>
             <div className="flex flex-col">
-     
               <span className="text-2xl font-extrabold leading-tight md:text-3xl">
-                ALTAY <span className="block md:inline">BOOTS</span>
+                {company?.name || 'ALTAY BOOTS'}
               </span>
             </div>
           </div>
@@ -85,14 +125,15 @@ const Header = () => {
                   Главная
                 </Link>
               </li>
+           
               <li>
-                <Link href="/aboutus" className="transition hover:text-yellow-300">
-                  О нас
-                </Link>
-              </li>
-              <li>
-                <Link href="/basket" className="transition hover:text-yellow-300">
-                  Корзина
+                <Link href="/basket" className="group relative inline-flex items-center gap-2 transition hover:text-yellow-300">
+                  <span>Корзина</span>
+                  {cartCount > 0 && (
+                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-yellow-300 px-2 text-xs font-bold text-black transition group-hover:scale-105">
+                      {cartCount}
+                    </span>
+                  )}
                 </Link>
               </li>
               <li>
@@ -108,9 +149,9 @@ const Header = () => {
               <li>
                 {isAuthed ? (
                   <div className="flex items-center gap-3">
-                    {userName && (
+                    {userId && (
                       <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold">
-                        {userName}
+                        {userId}
                       </span>
                     )}
                     <button
@@ -132,11 +173,10 @@ const Header = () => {
 
         <div className="max-w-lg space-y-2 text-left uppercase leading-tight">
           <p className="text-2xl font-extrabold md:text-3xl lg:text-4xl">
-            Брендовые ботинки
+            {company?.text || 'Брендовые ботинки'}
           </p>
-          <p className="text-2xl font-extrabold md:text-3xl lg:text-4xl">
-            <span className="text-yellow-300">Лучшее</span>{' '}
-            <span className="text-yellow-300">качество</span>
+          <p className="text-xl font-bold md:text-2xl lg:text-3xl text-yellow-300">
+            {company?.city && company?.base && `${company.city}, ${company.base}`}
           </p>
         </div>
       </div>

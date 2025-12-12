@@ -51,6 +51,7 @@ export default function ProductPage() {
   const [error, setError] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [addStatus, setAddStatus] = useState<string | null>(null)
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0)
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -143,8 +144,12 @@ export default function ProductPage() {
     fetchProduct()
   }, [productId])
 
-  const mainPhoto = product?.photos?.[0] ? normalizePhoto(product.photos[0]) : ''
-  const extraPhotos = product?.photos?.slice(1) ?? []
+  // Reset slide when product changes
+  useEffect(() => {
+    setActivePhotoIndex(0)
+  }, [productId])
+
+  const allPhotos = product?.photos?.map(normalizePhoto) ?? []
 
   const handleAddToCart = async () => {
     setAddStatus(null)
@@ -184,6 +189,12 @@ export default function ProductPage() {
       }
 
       setAddStatus('Товар добавлен в корзину')
+      if (typeof window !== 'undefined') {
+        const current = Number(localStorage.getItem('cartCount') || '0') || 0
+        const next = current + 1
+        localStorage.setItem('cartCount', String(next))
+        window.dispatchEvent(new Event('storage'))
+      }
     } catch (err) {
       setAddStatus(err instanceof Error ? err.message : 'Ошибка добавления')
     } finally {
@@ -213,27 +224,58 @@ export default function ProductPage() {
       {!loading && !error && product && (
         <div className="grid gap-8 rounded-2xl bg-white p-6 shadow md:grid-cols-2">
           <div className="space-y-4">
-            {mainPhoto ? (
-              <img
-                src={mainPhoto}
-                alt={product.name}
-                className="h-80 w-full rounded-xl object-cover"
-              />
-            ) : (
-              <div className="flex h-80 w-full items-center justify-center rounded-xl bg-gray-100 text-gray-400">
-                Нет фото
-              </div>
-            )}
-
-            {extraPhotos.length > 0 && (
-              <div className="grid grid-cols-3 gap-3">
-                {extraPhotos.map((photo, idx) => (
+            {/* Main Photo Slider */}
+            <div className="relative overflow-hidden rounded-2xl bg-gray-100">
+              {allPhotos.length > 0 ? (
+                <div className="relative aspect-square w-full sm:aspect-[4/3]">
                   <img
-                    key={`${photo}-${idx}`}
-                    src={normalizePhoto(photo)}
-                    alt={`${product.name} — фото ${idx + 2}`}
-                    className="h-24 w-full rounded-lg object-cover"
+                    src={allPhotos[activePhotoIndex]}
+                    alt={product.name}
+                    className="h-full w-full object-cover transition-opacity duration-300"
                   />
+                  
+                  {/* Arrows */}
+                  {allPhotos.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setActivePhotoIndex(prev => (prev === 0 ? allPhotos.length - 1 : prev - 1))}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 shadow-md backdrop-blur transition hover:bg-white"
+                      >
+                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                         </svg>
+                      </button>
+                      <button
+                        onClick={() => setActivePhotoIndex(prev => (prev + 1) % allPhotos.length)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 shadow-md backdrop-blur transition hover:bg-white"
+                      >
+                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                         </svg>
+                      </button>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="flex aspect-square w-full items-center justify-center text-gray-400 sm:aspect-[4/3]">
+                  Нет фото
+                </div>
+              )}
+            </div>
+
+            {/* Thumbnails */}
+            {allPhotos.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                {allPhotos.map((photo, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActivePhotoIndex(idx)}
+                    className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                      activePhotoIndex === idx ? 'border-rose-600 ring-2 ring-rose-100' : 'border-transparent opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={photo} alt="" className="h-full w-full object-cover" />
+                  </button>
                 ))}
               </div>
             )}
@@ -295,8 +337,11 @@ export default function ProductPage() {
       )}
 
       {!loading && !error && !product && (
-        <div className="rounded-lg bg-white p-4 text-sm text-gray-600 shadow">
-          Товар не найден.
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <p className="text-lg text-gray-500">Товар не найден</p>
+          <Link href="/" className="mt-4 text-rose-600 hover:underline">
+            Вернуться на главную
+          </Link>
         </div>
       )}
     </section>

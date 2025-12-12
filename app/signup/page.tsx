@@ -26,6 +26,8 @@ export default function SignUpPage() {
       if (result.token && typeof window !== 'undefined') {
         localStorage.setItem('token', result.token)
         if (result.userName) localStorage.setItem('userName', String(result.userName))
+        // Триггерим событие storage для обновления Header
+        window.dispatchEvent(new Event('storage'))
       }
       router.push('/')
     } catch (err) {

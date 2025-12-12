@@ -33,18 +33,10 @@ export async function signIn({ phone, password }: SignInParams): Promise<SignInR
     throw new Error(message)
   }
 
-  const token =
-    (data as { token?: string }).token ||
-    (data as { accessToken?: string }).accessToken ||
-    (data as { data?: { token?: string } }).data?.token
+  const token = (data as { token?: string }).token
+  const userName = (data as { name?: string }).name || null
 
-  type WithUser = { user?: { name?: string } }
-  const userName =
-    (data as { name?: string }).name ||
-    (data as { data?: { name?: string } }).data?.name ||
-    ((data as WithUser).user?.name ?? null)
-
-  return { token, userName: userName ?? null, raw: data }
+  return { token, userName, raw: data }
 }
 
 export async function signUp({ name, phone, password }: SignUpParams): Promise<SignInResult> {
@@ -63,17 +55,8 @@ export async function signUp({ name, phone, password }: SignUpParams): Promise<S
     throw new Error(message)
   }
 
-  const token =
-    (data as { token?: string }).token ||
-    (data as { accessToken?: string }).accessToken ||
-    (data as { data?: { token?: string } }).data?.token
+  const token = (data as { token?: string }).token
+  const userName = (data as { name?: string }).name || name || null
 
-  type WithUser = { user?: { name?: string } }
-  const userName =
-    (data as { name?: string }).name ||
-    (data as { data?: { name?: string } }).data?.name ||
-    ((data as WithUser).user?.name ?? null) ||
-    name
-
-  return { token, userName: userName ?? null, raw: data }
+  return { token, userName, raw: data }
 }
