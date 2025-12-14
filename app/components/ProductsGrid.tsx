@@ -44,12 +44,12 @@ export default function ProductsGrid() {
 
       {loading && (
         <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
-           {[...Array(4)].map((_, i) => (
-             <div key={i} className="aspect-[3/4] rounded-lg bg-stone-200 animate-pulse"></div>
-           ))}
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="aspect-[3/4] rounded-lg bg-stone-200 animate-pulse"></div>
+          ))}
         </div>
       )}
-      
+
       {error && (
         <div className="rounded-lg bg-red-50 p-4 text-center text-red-700 ring-1 ring-red-200">
           <p className="font-medium">Упс! {error}</p>
@@ -59,9 +59,9 @@ export default function ProductsGrid() {
       {!loading && !error && (
         <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
           {items.map((item) => (
-            <ProductCard 
-              key={item.product_id ?? item.name} 
-              item={item} 
+            <ProductCard
+              key={item.product_id ?? item.name}
+              item={item}
             />
           ))}
 

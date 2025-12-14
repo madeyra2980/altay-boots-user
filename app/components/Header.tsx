@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Image from 'next/image'
 import logo from '../utils/logo.jpg'
 import Loading from './ui/Loading'
+import { getCatalogs, Catalog } from '../service/CatalogService'
 
 type CompanyData = {
   company_id: number
@@ -24,6 +25,9 @@ const Header = () => {
   const [company, setCompany] = useState<CompanyData | null>(null)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [catalogs, setCatalogs] = useState<Catalog[]>([])
+  const [showCatalogDropdown, setShowCatalogDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const serverSnapshot = { isAuthed: false, userId: '', cartCount: 0 }
 
   const snapshotRef = useRef(serverSnapshot)
@@ -39,14 +43,40 @@ const Header = () => {
       }
     }
 
+    const fetchCatalogs = async () => {
+      try {
+        const data = await getCatalogs()
+        setCatalogs(data)
+      } catch (error) {
+        console.error('Error fetching catalogs:', error)
+      }
+    }
+
     fetchCompany()
-    
+    fetchCatalogs()
+
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20)
     }
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowCatalogDropdown(false)
+      }
+    }
+
+    if (showCatalogDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showCatalogDropdown])
 
   const getClientSnapshot = () => {
     if (typeof window === 'undefined') return serverSnapshot
@@ -72,7 +102,7 @@ const Header = () => {
   const getServerSnapshot = () => serverSnapshot
 
   const subscribe = (listener: () => void) => {
-    if (typeof window === 'undefined') return () => {}
+    if (typeof window === 'undefined') return () => { }
     const handler = () => listener()
     window.addEventListener('storage', handler)
     return () => window.removeEventListener('storage', handler)
@@ -111,7 +141,7 @@ const Header = () => {
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            
+
             {/* Logo Area */}
             <div className="flex-shrink-0 flex items-center gap-3">
               <Link href="/" className="flex items-center gap-3 group">
@@ -137,6 +167,69 @@ const Header = () => {
               <Link href="/" className="text-sm font-medium text-stone-600 hover:text-orange-600 transition-colors">
                 Главная
               </Link>
+
+              {/* Catalog Dropdown */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setShowCatalogDropdown(!showCatalogDropdown)}
+                  onMouseEnter={() => setShowCatalogDropdown(true)}
+                  className="text-sm font-medium text-stone-600 hover:text-orange-600 transition-colors flex items-center gap-1"
+                >
+                  Каталоги
+                  <svg
+                    className={`w-4 h-4 transition-transform duration-200 ${showCatalogDropdown ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showCatalogDropdown && (
+                  <div
+                    className="absolute top-full left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-stone-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+                    onMouseLeave={() => setShowCatalogDropdown(false)}
+                  >
+                    {catalogs.length > 0 ? (
+                      <ul className="py-2">
+                        {catalogs.map((catalog) => (
+                          <li key={catalog.catalog_id}>
+                            <Link
+                              href={`/catalog/${catalog.catalog_id}`}
+                              className="block px-6 py-3 hover:bg-orange-50 transition-colors group"
+                              onClick={() => setShowCatalogDropdown(false)}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white group-hover:scale-110 transition-transform">
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                  </svg>
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-semibold text-stone-900 group-hover:text-orange-600 transition-colors">
+                                    {catalog.name}
+                                  </p>
+                                  <p className="text-xs text-stone-500">Нажмите для просмотра товаров</p>
+                                </div>
+                                <svg className="w-4 h-4 text-stone-400 group-hover:text-orange-600 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="px-6 py-8 text-center text-stone-500">
+                        <p className="text-sm">Каталоги пока не добавлены</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <Link href="/my-orders" className="text-sm font-medium text-stone-600 hover:text-orange-600 transition-colors">
                 Мои заказы
               </Link>
@@ -176,9 +269,9 @@ const Header = () => {
                   </button>
                 </div>
               ) : (
-                  <Link href="/signin" className="text-sm font-semibold text-stone-900 hover:text-orange-600 transition-colors">
-                    Войти
-                  </Link>
+                <Link href="/signin" className="text-sm font-semibold text-stone-900 hover:text-orange-600 transition-colors">
+                  Войти
+                </Link>
               )}
             </div>
           </div>
