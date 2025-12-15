@@ -4,6 +4,11 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useMemo, useState, type SVGProps } from 'react'
 
+type ProductPhoto = {
+  photo_id: number
+  photoURL: string
+}
+
 type Product = {
   product_id?: number
   catalog_id?: number
@@ -12,14 +17,23 @@ type Product = {
   text?: string
   price?: number
   oldPrice?: number
-  photos?: string[]
+  photos?: ProductPhoto[] | string[]
 }
 
-const API_URL = 'http://185.146.3.132:8080/api/v1/auth/product'
+const API_URL = '/api/product'
 
-const normalizePhoto = (url?: string) => {
-  if (!url) return ''
-  return url.startsWith('http') ? url : `http://185.146.3.132:8080${url}`
+const normalizePhoto = (photo?: ProductPhoto | string) => {
+  if (!photo) return ''
+  // Если это объект с photoURL
+  if (typeof photo === 'object' && 'photoURL' in photo) {
+    const url = photo.photoURL
+    return url.startsWith('http') ? url : `http://185.146.3.132:8080${url}`
+  }
+  // Если это строка
+  if (typeof photo === 'string') {
+    return photo.startsWith('http') ? photo : `http://185.146.3.132:8080${photo}`
+  }
+  return ''
 }
 
 const CartIcon = (props: SVGProps<SVGSVGElement>) => (
@@ -69,7 +83,7 @@ export default function ProductPage() {
 
         // Получаем текст ответа
         const text = await res.text()
-        
+
         // Логируем для отладки
         console.log('Product fetch:', {
           productId,
@@ -80,20 +94,20 @@ export default function ProductPage() {
           url: `${API_URL}/${productId}`,
           textPreview: text.substring(0, 100)
         })
-        
+
         if (!res.ok) {
           // Пробуем распарсить как JSON для ошибки
           if (text && text.trim()) {
             try {
               const errorData = JSON.parse(text)
               const message = (errorData as { message?: string })?.message || 'Не удалось загрузить товар'
-              throw new Error(res.status === 403 
+              throw new Error(res.status === 403
                 ? 'Доступ запрещен. Возможно, необходимо войти в аккаунт.'
                 : message)
             } catch (err) {
               // Если не JSON, показываем ошибку по статусу
               if (err instanceof SyntaxError || !(err instanceof Error)) {
-                const statusText = res.status === 403 
+                const statusText = res.status === 403
                   ? 'Доступ запрещен. Возможно, необходимо войти в аккаунт.'
                   : res.statusText || 'Не удалось загрузить товар'
                 throw new Error(`Ошибка ${res.status}: ${statusText}`)
@@ -102,15 +116,15 @@ export default function ProductPage() {
             }
           } else {
             // Пустой ответ при ошибке
-            const statusText = res.status === 403 
+            const statusText = res.status === 403
               ? 'Доступ запрещен. Возможно, необходимо войти в аккаунт.'
               : res.status === 404
-              ? 'Товар не найден'
-              : res.statusText || 'Не удалось загрузить товар'
+                ? 'Товар не найден'
+                : res.statusText || 'Не удалось загрузить товар'
             throw new Error(`Ошибка ${res.status}: ${statusText}`)
           }
         }
-        
+
         // Успешный ответ - проверяем наличие данных
         if (!text || text.trim() === '') {
           // Если статус 200, но тело пустое - это проблема бэкенда
@@ -118,7 +132,7 @@ export default function ProductPage() {
           console.error('Бэкенд вернул статус 200, но пустое тело. Это проблема сервера.')
           throw new Error(`Товар с ID ${productId} не найден или недоступен. Сервер вернул пустой ответ (статус 200). Возможно, проблема на стороне сервера.`)
         }
-        
+
         try {
           const data = JSON.parse(text) as Product
           // Проверяем, что данные не пустые
@@ -168,7 +182,7 @@ export default function ProductPage() {
 
     try {
       setAdding(true)
-      const res = await fetch('http://185.146.3.132:8080/api/v1/user/add-product-to-cart', {
+      const res = await fetch('/api/cart/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -209,10 +223,10 @@ export default function ProductPage() {
           href="/"
           className="inline-flex items-center text-stone-500 hover:text-stone-800 transition-colors mb-8 group"
         >
-          <svg 
-            className="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform" 
-            fill="none" 
-            viewBox="0 0 24 24" 
+          <svg
+            className="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform"
+            fill="none"
+            viewBox="0 0 24 24"
             stroke="currentColor"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -223,10 +237,10 @@ export default function ProductPage() {
 
       {loading && (
         <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-800"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-800"></div>
         </div>
       )}
-      
+
       {error && (
         <div className="max-w-2xl mx-auto p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
@@ -246,7 +260,7 @@ export default function ProductPage() {
                     alt={product.name}
                     className="w-full h-full object-cover object-center transform transition duration-500 ease-in-out group-hover:scale-105"
                   />
-                  
+
                   {/* Navigation Arrows */}
                   {allPhotos.length > 1 && (
                     <>
@@ -255,18 +269,18 @@ export default function ProductPage() {
                         className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-all opacity-0 group-hover:opacity-100"
                         aria-label="Previous image"
                       >
-                         <svg className="w-6 h-6 text-stone-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                         </svg>
+                        <svg className="w-6 h-6 text-stone-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
                       </button>
                       <button
                         onClick={() => setActivePhotoIndex(prev => (prev + 1) % allPhotos.length)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-all opacity-0 group-hover:opacity-100"
                         aria-label="Next image"
                       >
-                         <svg className="w-6 h-6 text-stone-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                         </svg>
+                        <svg className="w-6 h-6 text-stone-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
                       </button>
                     </>
                   )}
@@ -285,15 +299,14 @@ export default function ProductPage() {
                   <button
                     key={idx}
                     onClick={() => setActivePhotoIndex(idx)}
-                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                      activePhotoIndex === idx 
-                        ? 'border-stone-800 shadow-md ring-1 ring-stone-800/20' 
-                        : 'border-transparent hover:border-stone-300'
-                    }`}
+                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${activePhotoIndex === idx
+                      ? 'border-stone-800 shadow-md ring-1 ring-stone-800/20'
+                      : 'border-transparent hover:border-stone-300'
+                      }`}
                   >
-                    <img 
-                      src={photo} 
-                      alt="" 
+                    <img
+                      src={photo}
+                      alt=""
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -355,13 +368,12 @@ export default function ProductPage() {
                     </>
                   )}
                 </button>
-                
+
                 {addStatus && (
-                  <div className={`text-sm text-center p-3 rounded-lg ${
-                    addStatus === 'Товар добавлен в корзину' 
-                      ? 'bg-green-50 text-green-700 border border-green-100' 
-                      : 'bg-stone-100 text-stone-600'
-                  }`}>
+                  <div className={`text-sm text-center p-3 rounded-lg ${addStatus === 'Товар добавлен в корзину'
+                    ? 'bg-green-50 text-green-700 border border-green-100'
+                    : 'bg-stone-100 text-stone-600'
+                    }`}>
                     <span className="mr-1">{addStatus}</span>
                     {addStatus === 'Товар добавлен в корзину' && (
                       <Link href="/basket" className="font-medium underline hover:text-green-800 ml-1">
@@ -379,8 +391,8 @@ export default function ProductPage() {
       {!loading && !error && !product && (
         <div className="text-center py-20">
           <p className="text-xl text-stone-500 mb-6">Товар не найден</p>
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="inline-block bg-stone-900 text-white px-6 py-3 rounded-lg hover:bg-stone-800 transition-colors"
           >
             Вернуться на главную

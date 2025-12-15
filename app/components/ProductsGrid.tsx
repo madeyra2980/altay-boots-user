@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import ProductCard, { type Product } from './ProductCard'
 
-const API_URL = 'http://185.146.3.132:8080/api/v1/auth/products'
+const API_URL = '/api/products'
 
 export default function ProductsGrid() {
   const [items, setItems] = useState<Product[]>([])
@@ -22,8 +22,18 @@ export default function ProductsGrid() {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data?.message || 'Не удалось загрузить товары')
+
+        // Безопасный парсинг JSON (защита от пустого ответа)
+        const data = await res.json().catch(() => null)
+
+        if (!res.ok) {
+          throw new Error(data?.message || `Ошибка сервера: ${res.status}`)
+        }
+
+        if (!data) {
+          throw new Error('Сервер вернул пустой ответ')
+        }
+
         setItems(Array.isArray(data) ? data : [])
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ошибка загрузки')
@@ -38,7 +48,7 @@ export default function ProductsGrid() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 bg-stone-50">
       <div className="flex items-center justify-between mb-10">
-        <h2 className="text-3xl font-bold tracking-tight text-stone-900 border-l-4 border-orange-500 pl-4">Каталог товаров</h2>
+        <h2 className="text-3xl font-bold tracking-tight text-stone-900 border-l-4 border-orange-500 pl-4">Все товары</h2>
         <div className="hidden sm:block text-sm text-stone-500">{items.length} товаров</div>
       </div>
 

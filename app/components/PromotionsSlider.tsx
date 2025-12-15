@@ -4,11 +4,16 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
+interface PromotionPhoto {
+  photo_id: number
+  photoURL: string
+}
+
 interface Promotion {
   promotion_id: number
   name: string
   description: string
-  photos: string[]
+  photos: PromotionPhoto[]
   percentageDiscounted: number
   global: boolean
   catalogId: number | null
@@ -50,12 +55,21 @@ const PromotionsSlider = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // ... (keep existing fetching logic) 
     const fetchPromotions = async () => {
       try {
-        const response = await fetch('http://185.146.3.132:8080/api/v1/auth/promotions')
-        const data = await response.json()
-        setPromotions(data)
+        const response = await fetch('/api/promotions')
+
+        // Безопасный парсинг JSON (защита от пустого ответа)
+        const data = await response.json().catch(() => null)
+
+        if (!response.ok) {
+          console.error('Error fetching promotions: Server returned', response.status)
+          return
+        }
+
+        if (data && Array.isArray(data)) {
+          setPromotions(data)
+        }
       } catch (error) {
         console.error('Error fetching promotions:', error)
       } finally {
@@ -90,8 +104,9 @@ const PromotionsSlider = () => {
     setCurrentSlide((prev) => (prev - 1 + promotions.length) % promotions.length)
   }
 
-  const getImageUrl = (photoPath: any) => {
-    if (!photoPath || typeof photoPath !== 'string') return null;
+  const getImageUrl = (photo: PromotionPhoto | undefined) => {
+    if (!photo || !photo.photoURL) return null;
+    const photoPath = photo.photoURL;
     if (photoPath.startsWith('http')) return photoPath;
     // Ensure there is a slash between base URL and path if missing
     const cleanPath = photoPath.startsWith('/') ? photoPath : `/${photoPath}`;

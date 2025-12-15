@@ -2,6 +2,11 @@ import Link from 'next/link'
 import { useState, useEffect, type SVGProps } from 'react'
 import { normalizePhoto } from '../utils/imageUtils'
 
+type ProductPhoto = {
+  photo_id: number
+  photoURL: string
+}
+
 export type Product = {
   product_id?: number
   catalog_id?: number
@@ -10,7 +15,7 @@ export type Product = {
   text?: string
   price?: number
   oldPrice?: number
-  photos?: string[]
+  photos?: ProductPhoto[] | string[]
 }
 
 const CartIcon = (props: SVGProps<SVGSVGElement>) => (
@@ -74,7 +79,7 @@ export default function ProductCard({ item }: { item: Product }) {
 
     try {
       setAdding(true)
-      const res = await fetch('http://185.146.3.132:8080/api/v1/user/add-product-to-cart', {
+      const res = await fetch('/api/cart/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +90,7 @@ export default function ProductCard({ item }: { item: Product }) {
       })
 
       if (!res.ok) {
-         try {
+        try {
           const errorData = await res.json()
           throw new Error((errorData as { message?: string })?.message || 'Ошибка')
         } catch (err) {
@@ -124,7 +129,7 @@ export default function ProductCard({ item }: { item: Product }) {
   }
 
   return (
-    <div 
+    <div
       className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 transition-all hover:shadow-xl hover:-translate-y-1 duration-300 h-full"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -140,7 +145,7 @@ export default function ProductCard({ item }: { item: Product }) {
               alt={item.name}
               className="h-full w-full object-cover object-center transition-transform duration-700 ease-in-out"
             />
-            
+
             {/* Carousel Arrows (only if > 1 photo) */}
             {allPhotos.length > 1 && (
               <>
@@ -162,15 +167,15 @@ export default function ProductCard({ item }: { item: Product }) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
-                
+
                 {/* Dots Indicator */}
                 <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10">
-                    {allPhotos.map((_, idx) => (
-                        <div 
-                            key={idx}
-                            className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all ${idx === activePhotoIndex ? 'bg-white scale-125' : 'bg-white/50'}`}
-                        />
-                    ))}
+                  {allPhotos.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all ${idx === activePhotoIndex ? 'bg-white scale-125' : 'bg-white/50'}`}
+                    />
+                  ))}
                 </div>
               </>
             )}
@@ -241,9 +246,9 @@ export default function ProductCard({ item }: { item: Product }) {
           )}
         </div>
         {productId && addStatus && addStatus !== 'В корзине' && (
-            <p className="mt-1 text-xs text-center text-orange-600 font-medium absolute bottom-16 left-0 right-0 bg-white/90 py-1 backdrop-blur-sm z-20 pointer-events-none">
+          <p className="mt-1 text-xs text-center text-orange-600 font-medium absolute bottom-16 left-0 right-0 bg-white/90 py-1 backdrop-blur-sm z-20 pointer-events-none">
             {addStatus}
-            </p>
+          </p>
         )}
       </div>
     </div>

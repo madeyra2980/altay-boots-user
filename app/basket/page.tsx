@@ -40,13 +40,31 @@ type OrderPayload = {
   index: string
 }
 
-const CART_URL = 'http://185.146.3.132:8080/api/v1/user/cart'
-const PRODUCT_URL = 'http://185.146.3.132:8080/api/v1/auth/product'
-const ORDER_URL = 'http://185.146.3.132:8080/api/v1/user/create-order'
+const CART_URL = '/api/cart'
+const PRODUCT_URL = '/api/product'
+const ORDER_URL = '/api/order'
 
-const normalizePhoto = (url?: string) => {
-  if (!url) return ''
-  return url.startsWith('http') ? url : `http://185.146.3.132:8080${url}`
+type PhotoObject = {
+  photo_id: number
+  photoURL: string
+}
+
+const normalizePhoto = (photo?: PhotoObject | string | null): string => {
+  if (!photo) return ''
+
+  // Если это объект с photoURL
+  if (typeof photo === 'object' && photo !== null && 'photoURL' in photo) {
+    const url = photo.photoURL
+    if (!url) return ''
+    return url.startsWith('http') ? url : `http://185.146.3.132:8080${url}`
+  }
+
+  // Если это строка
+  if (typeof photo === 'string') {
+    return photo.startsWith('http') ? photo : `http://185.146.3.132:8080${photo}`
+  }
+
+  return ''
 }
 
 export default function BasketPage() {
@@ -69,13 +87,12 @@ export default function BasketPage() {
   const [updatingId, setUpdatingId] = useState<number | null>(null)
 
   const total = useMemo(() => {
-    if (totalPrice) return totalPrice
     return items.reduce((sum, item) => {
       const price = item.productPrice ?? 0
       const qty = item.quantity ?? 0
       return sum + price * qty
     }, 0)
-  }, [items, totalPrice])
+  }, [items])
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -107,7 +124,7 @@ export default function BasketPage() {
             setLoading(false)
             return
           }
-          
+
           const text = await res.text().catch(() => '')
           let message = 'Не удалось загрузить корзину'
           if (text && text.trim()) {
@@ -120,9 +137,9 @@ export default function BasketPage() {
           }
           throw new Error(message)
         }
-        
+
         const text = await res.text()
-        
+
         if (!text || text.trim() === '') {
           setItems([])
           setTotalPrice(0)
@@ -133,7 +150,7 @@ export default function BasketPage() {
           setLoading(false)
           return
         }
-        
+
         const data = JSON.parse(text) as CartResponse
         const baseItems = Array.isArray(data.items) ? data.items : []
 
@@ -268,7 +285,7 @@ export default function BasketPage() {
       // Artificial delay
       await new Promise(resolve => setTimeout(resolve, 3000))
 
-      const res = await fetch(`http://185.146.3.132:8080/api/v1/user/delete-cart-item/${cartItemId}`, {
+      const res = await fetch(`/api/cart/${cartItemId}`, {
         method: 'DELETE',
         headers: {
           accept: '*/*',
@@ -281,7 +298,7 @@ export default function BasketPage() {
       }
 
       setItems((prev) => prev.filter((item) => item.cart_item_id !== cartItemId))
-      
+
       if (typeof window !== 'undefined') {
         const currentCount = Number(localStorage.getItem('cartCount') || '0')
         localStorage.setItem('cartCount', String(Math.max(0, currentCount - 1)))
@@ -306,7 +323,7 @@ export default function BasketPage() {
 
     setUpdatingId(cartItemId)
     try {
-      const res = await fetch('http://185.146.3.132:8080/api/v1/user/edit-cart', {
+      const res = await fetch('/api/cart/edit', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -334,245 +351,245 @@ export default function BasketPage() {
   }
 
   if (loading) {
-     return <Loading fullScreen />
+    return <Loading fullScreen />
   }
 
   return (
     <section className="min-h-screen bg-stone-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-            <Link
-              href="/"
-              className="group flex items-center text-sm font-medium text-stone-500 hover:text-stone-900 transition-colors"
-            >
-              <svg className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Каталог
-            </Link>
-            <h1 className="text-3xl font-bold text-stone-900 border-l-4 border-orange-500 pl-4">Корзина</h1>
+          <Link
+            href="/"
+            className="group flex items-center text-sm font-medium text-stone-500 hover:text-stone-900 transition-colors"
+          >
+            <svg className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Каталог
+          </Link>
+          <h1 className="text-3xl font-bold text-stone-900 border-l-4 border-orange-500 pl-4">Корзина</h1>
         </div>
 
         {error && (
-            <div className="mb-8 rounded-lg bg-red-50 p-4 border border-red-200 text-center">
+          <div className="mb-8 rounded-lg bg-red-50 p-4 border border-red-200 text-center">
             <p className="text-red-800 mb-4">{error}</p>
             {error.includes('Доступ запрещен') || error.includes('войдите') ? (
-                <Link
+              <Link
                 href="/signin"
                 className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
-                >
+              >
                 Войти в аккаунт
-                </Link>
+              </Link>
             ) : null}
-            </div>
+          </div>
         )}
 
         {!loading && !error && (
-            <div>
+          <div>
             {!items.length ? (
-                 orderMessage === 'SUCCESS' ? (
-                     <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-stone-200">
-                         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mb-6">
-                            <svg className="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                         </div>
-                         <h2 className="text-2xl font-bold text-stone-900 mb-2">Заказ успешно оформлен!</h2>
-                         <p className="text-stone-500 max-w-md mx-auto mb-8">
-                             Спасибо за покупку. Менеджер свяжется с вами в ближайшее время для подтверждения.
-                         </p>
-                         <Link href="/" className="inline-flex items-center px-6 py-3 bg-stone-900 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors">
-                             Продолжить покупки
-                         </Link>
-                     </div>
-                 ) : (
-                    <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-stone-200">
-                        <svg className="mx-auto h-16 w-16 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
-                        <h2 className="mt-4 text-xl font-bold text-stone-900">Ваша корзина пуста</h2>
-                        <p className="mt-2 text-stone-500 mb-8">Посмотрите наш каталог, там много интересного!</p>
-                        <Link href="/" className="inline-flex items-center px-6 py-3 bg-stone-900 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors">
-                            Перейти в каталог
-                        </Link>
-                    </div>
-                )
-            ) : (
-                <div className="lg:grid lg:grid-cols-12 lg:gap-x-12 lg:items-start">
-                    {/* Cart Items */}
-                    <div className="lg:col-span-7">
-                        <div className="space-y-6">
-                            {items.map((item) => {
-                            const mainPhoto = normalizePhoto(item.product?.photos?.[0])
-                            const displayName = item.product?.name || item.productName || `Товар #${item.productId}`
-                            const description = item.product?.description || item.product?.text
-                            const price = item.productPrice ?? item.product?.price
-                            return (
-                                <div key={item.cart_item_id ?? `${item.productId}-${item.productName}`} className="flex flex-col sm:flex-row bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden relative">
-                                    {/* Image */}
-                                    <div className="sm:w-40 h-40 bg-stone-100 flex-shrink-0 relative">
-                                        {mainPhoto ? (
-                                        <img src={mainPhoto} alt={displayName} className="w-full h-full object-cover" />
-                                        ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-stone-400 text-sm">Нет фото</div>
-                                        )}
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="flex-1 p-6 flex flex-col justify-between">
-                                        <div className="flex justify-between items-start gap-4">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-stone-900 line-clamp-1">{displayName}</h3>
-                                                <p className="text-sm text-stone-400 mb-2">ID: {item.productId ?? '—'}</p>
-                                                {description && <p className="text-sm text-stone-500 line-clamp-2">{description}</p>}
-                                            </div>
-                                            <p className="text-lg font-bold text-stone-900 whitespace-nowrap">
-                                                {price !== undefined ? `${price} ₸` : '—'}
-                                            </p>
-                                        </div>
-
-                                        <div className="flex items-end justify-between mt-4">
-                                            <div className="flex items-center border border-stone-200 rounded-lg">
-                                                <button
-                                                    onClick={() => handleUpdateQuantity(item.cart_item_id, (item.quantity ?? 1) - 1)}
-                                                    disabled={updatingId === item.cart_item_id || (item.quantity ?? 1) <= 1}
-                                                    className="px-3 py-1 text-stone-600 hover:bg-stone-50 disabled:opacity-50 transition-colors"
-                                                >
-                                                    -
-                                                </button>
-                                                <span className="px-3 py-1 text-stone-900 font-medium min-w-[2rem] text-center bg-stone-50 border-x border-stone-100 h-full flex items-center justify-center">
-                                                    {updatingId === item.cart_item_id ? (
-                                                    <svg className="w-4 h-4 animate-spin text-orange-500" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                                    ) : (
-                                                    item.quantity ?? 1
-                                                    )}
-                                                </span>
-                                                <button
-                                                    onClick={() => handleUpdateQuantity(item.cart_item_id, (item.quantity ?? 1) + 1)}
-                                                    disabled={updatingId === item.cart_item_id}
-                                                    className="px-3 py-1 text-stone-600 hover:bg-stone-50 disabled:opacity-50 transition-colors"
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
-                                            
-                                            <button
-                                                onClick={() => handleDeleteItem(item.cart_item_id)}
-                                                disabled={deletingId === item.cart_item_id}
-                                                className="text-stone-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50"
-                                                title="Удалить из корзины"
-                                            >
-                                                {deletingId === item.cart_item_id ? (
-                                                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                                ) : (
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                                )}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Order Summary & Checkout */}
-                    <div className="mt-16 bg-white rounded-2xl shadow-lg border border-stone-200 p-8 lg:col-span-5 lg:mt-0 sticky top-24">
-                        <h2 className="text-xl font-bold text-stone-900 mb-6 pb-6 border-b border-stone-100">Итого</h2>
-                        
-                        <div className="flex justify-between items-center mb-8">
-                            <span className="text-stone-600">Сумма заказа</span>
-                            <span className="text-2xl font-bold text-stone-900">{total} ₸</span>
-                        </div>
-
-                        <form onSubmit={handleOrderSubmit} className="space-y-4">
-                            <div>
-                                <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wider mb-4">Данные доставки</h3>
-                                {orderMessage && orderMessage !== 'SUCCESS' && (
-                                    <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg mb-4">{orderMessage}</div>
-                                )}
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-4">
-                                <input
-                                    className="col-span-1 rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
-                                    placeholder="Фамилия"
-                                    value={orderPayload.surName}
-                                    onChange={(e) => setOrderPayload((p) => ({ ...p, surName: e.target.value }))}
-                                    required
-                                />
-                                <input
-                                    className="col-span-1 rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
-                                    placeholder="Имя"
-                                    value={orderPayload.lastName}
-                                    onChange={(e) => setOrderPayload((p) => ({ ...p, lastName: e.target.value }))}
-                                    required
-                                />
-                            </div>
-
-                            <input
-                                className="w-full rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
-                                placeholder="Регион / Область"
-                                value={orderPayload.region}
-                                onChange={(e) => setOrderPayload((p) => ({ ...p, region: e.target.value }))}
-                                required
-                            />
-                            
-                            <input
-                                className="w-full rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
-                                placeholder="Город или район"
-                                value={orderPayload.cityOrDistrict}
-                                onChange={(e) => setOrderPayload((p) => ({ ...p, cityOrDistrict: e.target.value }))}
-                                required
-                            />
-
-                            <div className="grid grid-cols-3 gap-4">
-                                <input
-                                    className="col-span-2 rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
-                                    placeholder="Улица"
-                                    value={orderPayload.street}
-                                    onChange={(e) => setOrderPayload((p) => ({ ...p, street: e.target.value }))}
-                                    required
-                                />
-                                <input
-                                    className="col-span-1 rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
-                                    placeholder="Дом/Кв"
-                                    value={orderPayload.houseOrApartment}
-                                    onChange={(e) => setOrderPayload((p) => ({ ...p, houseOrApartment: e.target.value }))}
-                                    required
-                                />
-                            </div>
-                            
-                            <input
-                                className="w-full rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
-                                placeholder="Почтовый индекс"
-                                value={orderPayload.index}
-                                onChange={(e) => setOrderPayload((p) => ({ ...p, index: e.target.value }))}
-                                required
-                            />
-                            
-                            <button
-                                type="submit"
-                                disabled={orderLoading}
-                                className="w-full mt-6 flex items-center justify-center rounded-xl bg-stone-900 px-6 py-4 text-base font-bold text-white shadow-lg transition-all hover:bg-orange-600 hover:shadow-orange-500/20 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
-                            >
-                                {orderLoading ? (
-                                    <span className="flex items-center gap-2">
-                                        <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                        Обработка...
-                                    </span>
-                                ) : 'Оформить заказ'}
-                            </button>
-                            <p className="text-xs text-center text-stone-400 mt-4">
-                                Нажимая кнопку, вы соглашаетесь с условиями обработки персональных данных
-                            </p>
-                        </form>
-                    </div>
+              orderMessage === 'SUCCESS' ? (
+                <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-stone-200">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mb-6">
+                    <svg className="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-stone-900 mb-2">Заказ успешно оформлен!</h2>
+                  <p className="text-stone-500 max-w-md mx-auto mb-8">
+                    Спасибо за покупку. Менеджер свяжется с вами в ближайшее время для подтверждения.
+                  </p>
+                  <Link href="/" className="inline-flex items-center px-6 py-3 bg-stone-900 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors">
+                    Продолжить покупки
+                  </Link>
                 </div>
+              ) : (
+                <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-stone-200">
+                  <svg className="mx-auto h-16 w-16 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  <h2 className="mt-4 text-xl font-bold text-stone-900">Ваша корзина пуста</h2>
+                  <p className="mt-2 text-stone-500 mb-8">Посмотрите наш каталог, там много интересного!</p>
+                  <Link href="/" className="inline-flex items-center px-6 py-3 bg-stone-900 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors">
+                    Перейти в каталог
+                  </Link>
+                </div>
+              )
+            ) : (
+              <div className="lg:grid lg:grid-cols-12 lg:gap-x-12 lg:items-start">
+                {/* Cart Items */}
+                <div className="lg:col-span-7">
+                  <div className="space-y-6">
+                    {items.map((item) => {
+                      const mainPhoto = normalizePhoto(item.product?.photos?.[0])
+                      const displayName = item.product?.name || item.productName || `Товар #${item.productId}`
+                      const description = item.product?.description || item.product?.text
+                      const price = item.productPrice ?? item.product?.price
+                      return (
+                        <div key={item.cart_item_id ?? `${item.productId}-${item.productName}`} className="flex flex-col sm:flex-row bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden relative">
+                          {/* Image */}
+                          <div className="sm:w-40 h-40 bg-stone-100 flex-shrink-0 relative">
+                            {mainPhoto ? (
+                              <img src={mainPhoto} alt={displayName} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-stone-400 text-sm">Нет фото</div>
+                            )}
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 p-6 flex flex-col justify-between">
+                            <div className="flex justify-between items-start gap-4">
+                              <div>
+                                <h3 className="text-lg font-bold text-stone-900 line-clamp-1">{displayName}</h3>
+                                <p className="text-sm text-stone-400 mb-2">ID: {item.productId ?? '—'}</p>
+                                {description && <p className="text-sm text-stone-500 line-clamp-2">{description}</p>}
+                              </div>
+                              <p className="text-lg font-bold text-stone-900 whitespace-nowrap">
+                                {price !== undefined ? `${price} ₸` : '—'}
+                              </p>
+                            </div>
+
+                            <div className="flex items-end justify-between mt-4">
+                              <div className="flex items-center border border-stone-200 rounded-lg">
+                                <button
+                                  onClick={() => handleUpdateQuantity(item.cart_item_id, (item.quantity ?? 1) - 1)}
+                                  disabled={updatingId === item.cart_item_id || (item.quantity ?? 1) <= 1}
+                                  className="px-3 py-1 text-stone-600 hover:bg-stone-50 disabled:opacity-50 transition-colors"
+                                >
+                                  -
+                                </button>
+                                <span className="px-3 py-1 text-stone-900 font-medium min-w-[2rem] text-center bg-stone-50 border-x border-stone-100 h-full flex items-center justify-center">
+                                  {updatingId === item.cart_item_id ? (
+                                    <svg className="w-4 h-4 animate-spin text-orange-500" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                  ) : (
+                                    item.quantity ?? 1
+                                  )}
+                                </span>
+                                <button
+                                  onClick={() => handleUpdateQuantity(item.cart_item_id, (item.quantity ?? 1) + 1)}
+                                  disabled={updatingId === item.cart_item_id}
+                                  className="px-3 py-1 text-stone-600 hover:bg-stone-50 disabled:opacity-50 transition-colors"
+                                >
+                                  +
+                                </button>
+                              </div>
+
+                              <button
+                                onClick={() => handleDeleteItem(item.cart_item_id)}
+                                disabled={deletingId === item.cart_item_id}
+                                className="text-stone-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50"
+                                title="Удалить из корзины"
+                              >
+                                {deletingId === item.cart_item_id ? (
+                                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                ) : (
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Order Summary & Checkout */}
+                <div className="mt-16 bg-white rounded-2xl shadow-lg border border-stone-200 p-8 lg:col-span-5 lg:mt-0 sticky top-24">
+                  <h2 className="text-xl font-bold text-stone-900 mb-6 pb-6 border-b border-stone-100">Итого</h2>
+
+                  <div className="flex justify-between items-center mb-8">
+                    <span className="text-stone-600">Сумма заказа</span>
+                    <span className="text-2xl font-bold text-stone-900">{total} ₸</span>
+                  </div>
+
+                  <form onSubmit={handleOrderSubmit} className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wider mb-4">Данные доставки</h3>
+                      {orderMessage && orderMessage !== 'SUCCESS' && (
+                        <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg mb-4">{orderMessage}</div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <input
+                        className="col-span-1 rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
+                        placeholder="Фамилия"
+                        value={orderPayload.surName}
+                        onChange={(e) => setOrderPayload((p) => ({ ...p, surName: e.target.value }))}
+                        required
+                      />
+                      <input
+                        className="col-span-1 rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
+                        placeholder="Имя"
+                        value={orderPayload.lastName}
+                        onChange={(e) => setOrderPayload((p) => ({ ...p, lastName: e.target.value }))}
+                        required
+                      />
+                    </div>
+
+                    <input
+                      className="w-full rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
+                      placeholder="Регион / Область"
+                      value={orderPayload.region}
+                      onChange={(e) => setOrderPayload((p) => ({ ...p, region: e.target.value }))}
+                      required
+                    />
+
+                    <input
+                      className="w-full rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
+                      placeholder="Город или район"
+                      value={orderPayload.cityOrDistrict}
+                      onChange={(e) => setOrderPayload((p) => ({ ...p, cityOrDistrict: e.target.value }))}
+                      required
+                    />
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <input
+                        className="col-span-2 rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
+                        placeholder="Улица"
+                        value={orderPayload.street}
+                        onChange={(e) => setOrderPayload((p) => ({ ...p, street: e.target.value }))}
+                        required
+                      />
+                      <input
+                        className="col-span-1 rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
+                        placeholder="Дом/Кв"
+                        value={orderPayload.houseOrApartment}
+                        onChange={(e) => setOrderPayload((p) => ({ ...p, houseOrApartment: e.target.value }))}
+                        required
+                      />
+                    </div>
+
+                    <input
+                      className="w-full rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
+                      placeholder="Почтовый индекс"
+                      value={orderPayload.index}
+                      onChange={(e) => setOrderPayload((p) => ({ ...p, index: e.target.value }))}
+                      required
+                    />
+
+                    <button
+                      type="submit"
+                      disabled={orderLoading}
+                      className="w-full mt-6 flex items-center justify-center rounded-xl bg-stone-900 px-6 py-4 text-base font-bold text-white shadow-lg transition-all hover:bg-orange-600 hover:shadow-orange-500/20 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                      {orderLoading ? (
+                        <span className="flex items-center gap-2">
+                          <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                          Обработка...
+                        </span>
+                      ) : 'Оформить заказ'}
+                    </button>
+                    <p className="text-xs text-center text-stone-400 mt-4">
+                      Нажимая кнопку, вы соглашаетесь с условиями обработки персональных данных
+                    </p>
+                  </form>
+                </div>
+              </div>
             )}
-            </div>
+          </div>
         )}
       </div>
     </section>

@@ -6,11 +6,16 @@ import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import Loading from '../../components/ui/Loading'
 
+interface PromotionPhoto {
+  photo_id: number
+  photoURL: string
+}
+
 type Promotion = {
   promotion_id: number
   name: string
   description: string
-  photos: string[]
+  photos: PromotionPhoto[]
   percentageDiscounted: number
   global: boolean
   catalogId: number | null
@@ -38,11 +43,11 @@ const formatDate = (dateString: string) => {
   if (!dateString) return ''
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return dateString
-  
+
   const day = date.getDate()
   const month = MONTHS_RU[date.getMonth()]
   const year = date.getFullYear()
-  
+
   return `${day} ${month} ${year}`
 }
 
@@ -61,7 +66,7 @@ export default function PromotionPage() {
         if (!res.ok) throw new Error('Failed to fetch promotion')
         const data = await res.json()
         // Artificial delay for premium feel
-        await new Promise(resolve => setTimeout(resolve, 800)) 
+        await new Promise(resolve => setTimeout(resolve, 800))
         setPromotion(data)
       } catch (err) {
         setError('Не удалось загрузить акцию')
@@ -75,7 +80,7 @@ export default function PromotionPage() {
   }, [id])
 
   if (loading) return <Loading fullScreen />
-  
+
   if (error) return (
     <div className="min-h-screen flex items-center justify-center bg-stone-50">
       <div className="text-center p-8 bg-white rounded-xl shadow-lg border border-red-100 max-w-md">
@@ -93,28 +98,36 @@ export default function PromotionPage() {
 
   if (!promotion) return (
     <div className="min-h-screen flex items-center justify-center bg-stone-50">
-       <div className="text-center p-8">
+      <div className="text-center p-8">
         <h2 className="text-xl font-bold text-stone-900">Акция не найдена</h2>
         <Link href="/" className="text-orange-600 hover:underline mt-4 inline-block">Вернуться в магазин</Link>
-       </div>
+      </div>
     </div>
   )
 
-  const mainPhoto = promotion.photos && promotion.photos.length > 0 
-    ? `http://185.146.3.132:8080${promotion.photos[0]}` 
+  const getPhotoUrl = (photo: PromotionPhoto | undefined) => {
+    if (!photo || !photo.photoURL) return null
+    const photoPath = photo.photoURL
+    if (photoPath.startsWith('http')) return photoPath
+    const cleanPath = photoPath.startsWith('/') ? photoPath : `/${photoPath}`
+    return `http://185.146.3.132:8080${cleanPath}`
+  }
+
+  const mainPhoto = promotion.photos && promotion.photos.length > 0
+    ? getPhotoUrl(promotion.photos[0])
     : null
 
   return (
     <div className="min-h-screen bg-stone-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
-        <Link 
-          href="/" 
+        <Link
+          href="/"
           className="inline-flex items-center text-sm font-medium text-stone-500 hover:text-orange-600 transition-colors mb-8 group"
         >
           <svg className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           На главную
         </Link>
-        
+
         <article className="bg-white rounded-2xl shadow-xl overflow-hidden border border-stone-100">
           {mainPhoto && (
             <div className="relative h-[400px] sm:h-[500px] w-full group">
@@ -126,9 +139,9 @@ export default function PromotionPage() {
                 priority
               />
               <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/40 to-transparent" />
-              
+
               <div className="absolute top-6 left-6 z-10">
-                 <span className="inline-flex items-center px-4 py-2 rounded-full bg-orange-600/90 text-white font-bold text-sm shadow-lg backdrop-blur-sm border border-orange-500/50">
+                <span className="inline-flex items-center px-4 py-2 rounded-full bg-orange-600/90 text-white font-bold text-sm shadow-lg backdrop-blur-sm border border-orange-500/50">
                   -{promotion.percentageDiscounted}% Скидка
                 </span>
               </div>
@@ -154,30 +167,30 @@ export default function PromotionPage() {
                   </p>
                 </div>
 
-                 <div className="bg-stone-50 rounded-xl p-6 border border-stone-100">
-                    <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wider mb-4">Период проведения</h3>
-                    <div className="flex flex-col sm:flex-row gap-6"> 
-                      <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-green-600">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                          </div>
-                          <div>
-                            <p className="text-xs text-stone-500 font-medium">Дата начала</p>
-                            <p className="text-stone-900 font-bold">{formatDate(promotion.startDate)}</p>
-                          </div>
+                <div className="bg-stone-50 rounded-xl p-6 border border-stone-100">
+                  <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wider mb-4">Период проведения</h3>
+                  <div className="flex flex-col sm:flex-row gap-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-green-600">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       </div>
-                      <div className="hidden sm:block w-px bg-stone-200 self-center h-8"></div>
-                       <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-red-600">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                          </div>
-                          <div>
-                            <p className="text-xs text-stone-500 font-medium">Дата окончания</p>
-                            <p className="text-stone-900 font-bold">{formatDate(promotion.endDate)}</p>
-                          </div>
+                      <div>
+                        <p className="text-xs text-stone-500 font-medium">Дата начала</p>
+                        <p className="text-stone-900 font-bold">{formatDate(promotion.startDate)}</p>
                       </div>
                     </div>
-                 </div>
+                    <div className="hidden sm:block w-px bg-stone-200 self-center h-8"></div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-red-600">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      </div>
+                      <div>
+                        <p className="text-xs text-stone-500 font-medium">Дата окончания</p>
+                        <p className="text-stone-900 font-bold">{formatDate(promotion.endDate)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="lg:col-span-1">
@@ -185,34 +198,34 @@ export default function PromotionPage() {
                   <h3 className="text-xl font-bold mb-6">Действия</h3>
                   <div className="space-y-4">
                     {promotion.catalogId && (
-                      <Link 
+                      <Link
                         href={`/catalog/${promotion.catalogId}`}
                         className="block w-full text-center px-6 py-3 bg-white text-stone-900 font-bold rounded-lg hover:bg-orange-600 hover:text-white transition-all shadow-lg"
                       >
                         Перейти в каталог
                       </Link>
                     )}
-                     {promotion.productId && (
-                      <Link 
+                    {promotion.productId && (
+                      <Link
                         href={`/product/${promotion.productId}`}
                         className="block w-full text-center px-6 py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition-all shadow-lg"
                       >
                         Смотреть товар
                       </Link>
                     )}
-                     {!promotion.catalogId && !promotion.productId && (
-                       <div className="p-4 bg-white/10 rounded-lg border border-white/10">
-                         <p className="text-stone-300 text-sm leading-relaxed">
-                           Эта акция распространяется на множество товаров. Перейдите в общий каталог для подробностей.
-                         </p>
-                         <Link 
-                            href="/"
-                            className="inline-block mt-4 text-orange-400 hover:text-white font-medium text-sm transition-colors border-b border-orange-400/50 hover:border-white"
-                          >
-                           Перейти в магазин →
-                          </Link>
-                       </div>
-                     )}
+                    {!promotion.catalogId && !promotion.productId && (
+                      <div className="p-4 bg-white/10 rounded-lg border border-white/10">
+                        <p className="text-stone-300 text-sm leading-relaxed">
+                          Эта акция распространяется на множество товаров. Перейдите в общий каталог для подробностей.
+                        </p>
+                        <Link
+                          href="/"
+                          className="inline-block mt-4 text-orange-400 hover:text-white font-medium text-sm transition-colors border-b border-orange-400/50 hover:border-white"
+                        >
+                          Перейти в магазин →
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
