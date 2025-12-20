@@ -251,39 +251,66 @@ export default function ProductPage() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
           {/* Photos Column */}
           <div className="space-y-6">
-            {/* Main Photo Frame */}
+            {/* Main Photo Carousel Frame */}
             <div className="relative aspect-square bg-stone-100 rounded-2xl overflow-hidden shadow-sm group">
               {allPhotos.length > 0 ? (
                 <>
-                  <img
-                    src={allPhotos[activePhotoIndex]}
-                    alt={product.name}
-                    className="w-full h-full object-cover object-center transform transition duration-500 ease-in-out group-hover:scale-105"
-                  />
+                  <div
+                    className="flex h-full transition-transform duration-500 ease-out"
+                    style={{ transform: `translateX(-${activePhotoIndex * 100}%)` }}
+                  >
+                    {allPhotos.map((photo, index) => (
+                      <img
+                        key={index}
+                        src={photo}
+                        alt={`${product.name} - ${index + 1}`}
+                        className="w-full h-full flex-shrink-0 object-cover object-center"
+                      />
+                    ))}
+                  </div>
 
-                  {/* Navigation Arrows */}
-                  {allPhotos.length > 1 && (
-                    <>
+                  {/* Navigation Arrows (Always visible on hover) */}
+                  <div className="absolute inset-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setActivePhotoIndex(prev => (prev === 0 ? allPhotos.length - 1 : prev - 1))
+                      }}
+                      className="pointer-events-auto flex items-center justify-center h-12 w-12 rounded-full bg-white/90 text-stone-800 shadow-xl backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95 z-20"
+                      aria-label="Previous image"
+                    >
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setActivePhotoIndex(prev => (prev + 1) % allPhotos.length)
+                      }}
+                      className="pointer-events-auto flex items-center justify-center h-12 w-12 rounded-full bg-white/90 text-stone-800 shadow-xl backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95 z-20"
+                      aria-label="Next image"
+                    >
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Indicators / Progress bar */}
+                  <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
+                    {allPhotos.map((_, idx) => (
                       <button
-                        onClick={() => setActivePhotoIndex(prev => (prev === 0 ? allPhotos.length - 1 : prev - 1))}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-all opacity-0 group-hover:opacity-100"
-                        aria-label="Previous image"
-                      >
-                        <svg className="w-6 h-6 text-stone-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => setActivePhotoIndex(prev => (prev + 1) % allPhotos.length)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-all opacity-0 group-hover:opacity-100"
-                        aria-label="Next image"
-                      >
-                        <svg className="w-6 h-6 text-stone-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    </>
-                  )}
+                        key={idx}
+                        onClick={() => setActivePhotoIndex(idx)}
+                        className={`h-1.5 rounded-full transition-all duration-300 shadow-sm ${idx === activePhotoIndex
+                            ? 'bg-white w-8'
+                            : 'bg-white/40 w-1.5 hover:bg-white/60'
+                          }`}
+                        aria-label={`Go to slide ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
                 </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-stone-400">
@@ -292,7 +319,7 @@ export default function ProductPage() {
               )}
             </div>
 
-            {/* Thumbnails */}
+            {/* Thumbnails (Only show if > 1 for better focus) */}
             {allPhotos.length > 1 && (
               <div className="grid grid-cols-5 gap-4">
                 {allPhotos.map((photo, idx) => (
@@ -300,7 +327,7 @@ export default function ProductPage() {
                     key={idx}
                     onClick={() => setActivePhotoIndex(idx)}
                     className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${activePhotoIndex === idx
-                      ? 'border-stone-800 shadow-md ring-1 ring-stone-800/20'
+                      ? 'border-orange-500 shadow-md ring-1 ring-orange-500/20'
                       : 'border-transparent hover:border-stone-300'
                       }`}
                   >

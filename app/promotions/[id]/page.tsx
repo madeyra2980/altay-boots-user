@@ -56,6 +56,7 @@ export default function PromotionPage() {
   const [promotion, setPromotion] = useState<Promotion | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0)
 
   useEffect(() => {
     if (!id) return
@@ -113,9 +114,9 @@ export default function PromotionPage() {
     return `http://185.146.3.132:8080${cleanPath}`
   }
 
-  const mainPhoto = promotion.photos && promotion.photos.length > 0
-    ? getPhotoUrl(promotion.photos[0])
-    : null
+  const allPhotos = promotion.photos && promotion.photos.length > 0
+    ? promotion.photos.map(p => getPhotoUrl(p)).filter(url => url !== null) as string[]
+    : []
 
   return (
     <div className="min-h-screen bg-stone-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -129,16 +130,26 @@ export default function PromotionPage() {
         </Link>
 
         <article className="bg-white rounded-2xl shadow-xl overflow-hidden border border-stone-100">
-          {mainPhoto && (
-            <div className="relative h-[400px] sm:h-[500px] w-full group">
-              <Image
-                src={mainPhoto}
-                alt={promotion.name}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-700"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/40 to-transparent" />
+          {allPhotos.length > 0 && (
+            <div className="relative h-[400px] sm:h-[500px] w-full group overflow-hidden bg-stone-100">
+              <div
+                className="flex h-full transition-transform duration-500 ease-out"
+                style={{ transform: `translateX(-${activePhotoIndex * 100}%)` }}
+              >
+                {allPhotos.map((photo, index) => (
+                  <div key={index} className="relative w-full h-full flex-shrink-0">
+                    <Image
+                      src={photo}
+                      alt={`${promotion.name} - ${index + 1}`}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-700"
+                      priority={index === 0}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/40 to-transparent pointer-events-none" />
 
               <div className="absolute top-6 left-6 z-10">
                 <span className="inline-flex items-center px-4 py-2 rounded-full bg-orange-600/90 text-white font-bold text-sm shadow-lg backdrop-blur-sm border border-orange-500/50">
@@ -146,7 +157,50 @@ export default function PromotionPage() {
                 </span>
               </div>
 
-              <div className="absolute bottom-0 left-0 right-0 p-8 sm:p-10 z-10 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+              {/* Navigation Arrows */}
+              <div className="absolute inset-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    setActivePhotoIndex(prev => (prev === 0 ? allPhotos.length - 1 : prev - 1))
+                  }}
+                  className="pointer-events-auto flex items-center justify-center h-12 w-12 rounded-full bg-white/90 text-stone-800 shadow-xl backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95 z-20"
+                  aria-label="Previous image"
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    setActivePhotoIndex(prev => (prev + 1) % allPhotos.length)
+                  }}
+                  className="pointer-events-auto flex items-center justify-center h-12 w-12 rounded-full bg-white/90 text-stone-800 shadow-xl backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95 z-20"
+                  aria-label="Next image"
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Indicators */}
+              <div className="absolute bottom-16 left-0 right-0 flex justify-center gap-2 z-20">
+                {allPhotos.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActivePhotoIndex(idx)}
+                    className={`h-1.5 rounded-full transition-all duration-300 shadow-sm ${idx === activePhotoIndex
+                        ? 'bg-white w-8'
+                        : 'bg-white/40 w-1.5 hover:bg-white/60'
+                      }`}
+                    aria-label={`Go to slide ${idx + 1}`}
+                  />
+                ))}
+              </div>
+
+              <div className="absolute bottom-0 left-0 right-0 p-8 sm:p-10 z-10 translate-y-2 group-hover:translate-y-0 transition-transform duration-500 pointer-events-none">
                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight drop-shadow-md mb-2">
                   {promotion.name}
                 </h1>

@@ -140,45 +140,56 @@ export default function ProductCard({ item }: { item: Product }) {
       >
         {allPhotos.length > 0 ? (
           <>
-            <img
-              src={allPhotos[activePhotoIndex]}
-              alt={item.name}
-              className="h-full w-full object-cover object-center transition-transform duration-700 ease-in-out"
-            />
+            <div className="flex h-full transition-transform duration-500 ease-out" style={{ transform: `translateX(-${activePhotoIndex * 100}%)` }}>
+              {allPhotos.map((photo, index) => (
+                <img
+                  key={index}
+                  src={photo}
+                  alt={`${item.name} - ${index + 1}`}
+                  className="h-full w-full flex-shrink-0 object-cover object-center"
+                />
+              ))}
+            </div>
 
-            {/* Carousel Arrows (only if > 1 photo) */}
-            {allPhotos.length > 1 && (
-              <>
-                <button
-                  onClick={handlePrevPhoto}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-white/80 text-stone-800 shadow-sm backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white z-10"
-                  aria-label="Previous image"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button
-                  onClick={handleNextPhoto}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-white/80 text-stone-800 shadow-sm backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white z-10"
-                  aria-label="Next image"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
+            {/* Carousel Arrows */}
+            <div className="absolute inset-0 flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+              <button
+                onClick={handlePrevPhoto}
+                className="pointer-events-auto flex items-center justify-center h-8 w-8 rounded-full bg-white/90 text-stone-800 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95 z-20"
+                aria-label="Previous image"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                onClick={handleNextPhoto}
+                className="pointer-events-auto flex items-center justify-center h-8 w-8 rounded-full bg-white/90 text-stone-800 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95 z-20"
+                aria-label="Next image"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
 
-                {/* Dots Indicator */}
-                <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10">
-                  {allPhotos.map((_, idx) => (
-                    <div
-                      key={idx}
-                      className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all ${idx === activePhotoIndex ? 'bg-white scale-125' : 'bg-white/50'}`}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
+            {/* Progressive Indicator Dots */}
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 z-20">
+              {allPhotos.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setActivePhotoIndex(idx)
+                  }}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${idx === activePhotoIndex
+                      ? 'bg-white w-4'
+                      : 'bg-white/40 w-1.5 hover:bg-white/60'
+                    }`}
+                />
+              ))}
+            </div>
           </>
         ) : (
           <div className="flex h-full w-full items-center justify-center text-stone-400">
