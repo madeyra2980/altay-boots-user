@@ -18,22 +18,34 @@ type Product = {
   price?: number
   oldPrice?: number
   photos?: ProductPhoto[] | string[]
+  sizes?: string
 }
 
 const API_URL = '/api/product'
 
 const normalizePhoto = (photo?: ProductPhoto | string) => {
   if (!photo) return ''
+
+  let path = ''
+
   // Если это объект с photoURL
   if (typeof photo === 'object' && 'photoURL' in photo) {
-    const url = photo.photoURL
-    return url.startsWith('http') ? url : `http://185.146.3.132:8080${url}`
+    path = photo.photoURL || ''
+  } else if (typeof photo === 'string') {
+    path = photo
   }
-  // Если это строка
-  if (typeof photo === 'string') {
-    return photo.startsWith('http') ? photo : `http://185.146.3.132:8080${photo}`
+
+  if (!path) return ''
+
+  if (path.startsWith('http')) return path
+
+  // Очищаем путь: оставляем только то, что начинается с /uploads
+  const idx = path.indexOf("/uploads");
+  if (idx !== -1) {
+    return `http://185.146.3.132:8080${path.slice(idx)}`;
   }
-  return ''
+
+  return path.startsWith('http') ? path : `http://185.146.3.132:8080${path.startsWith('/') ? path : '/' + path}`
 }
 
 const CartIcon = (props: SVGProps<SVGSVGElement>) => (
@@ -344,6 +356,32 @@ export default function ProductPage() {
             )}
 
             <div className="space-y-8 flex-grow">
+              {product.sizes && (
+                <div>
+                  <h3 className="text-stone-900 font-medium mb-3">Доступные размеры</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {(() => {
+                      try {
+                        const parsedSizes = JSON.parse(product.sizes);
+                        if (Array.isArray(parsedSizes)) {
+                          return parsedSizes.map((size: string) => (
+                            <span
+                              key={size}
+                              className="px-4 py-2 border border-stone-200 rounded-lg text-stone-800 bg-white text-sm font-medium"
+                            >
+                              {size}
+                            </span>
+                          ));
+                        }
+                        return <span className="text-stone-600">{product.sizes}</span>;
+                      } catch (e) {
+                        return <span className="text-stone-600">{product.sizes}</span>;
+                      }
+                    })()}
+                  </div>
+                </div>
+              )}
+
               {product.text && (
                 <div className="prose prose-stone max-w-none text-stone-600">
                   <h3 className="text-stone-900 font-medium mb-2">Описание</h3>

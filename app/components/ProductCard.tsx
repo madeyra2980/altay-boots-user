@@ -16,6 +16,7 @@ export type Product = {
   price?: number
   oldPrice?: number
   photos?: ProductPhoto[] | string[]
+  sizes?: string
 }
 
 const CartIcon = (props: SVGProps<SVGSVGElement>) => (

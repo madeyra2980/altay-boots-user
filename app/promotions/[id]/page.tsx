@@ -107,9 +107,16 @@ export default function PromotionPage() {
 
   const getPhotoUrl = (photo: PromotionPhoto | undefined) => {
     if (!photo || !photo.photoURL) return null
-    const photoPath = photo.photoURL
-    if (photoPath.startsWith('http')) return photoPath
-    const cleanPath = photoPath.startsWith('/') ? photoPath : `/${photoPath}`
+    const path = photo.photoURL
+    if (path.startsWith('http')) return path
+
+    // Очищаем путь: оставляем только то, что начинается с /uploads
+    const idx = path.indexOf("/uploads");
+    if (idx !== -1) {
+      return `http://185.146.3.132:8080${path.slice(idx)}`;
+    }
+
+    const cleanPath = path.startsWith('/') ? path : `/${path}`
     return `http://185.146.3.132:8080${cleanPath}`
   }
 

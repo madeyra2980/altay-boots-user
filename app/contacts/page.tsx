@@ -9,11 +9,26 @@ type CompanyData = {
   photoURL: string
   base: string
   city: string
+  street?: string
+  email?: string
+  phone?: string
+  jobStart?: string
+  jobEnd?: string
+  freeStart?: string
+  freeEnd?: string
 }
 
 const normalizePhoto = (url?: string) => {
   if (!url) return ''
-  return url.startsWith('http') ? url : `http://185.146.3.132:8080${url}`
+  if (url.startsWith('http')) return url
+
+  // Очищаем путь: оставляем только то, что начинается с /uploads
+  const idx = url.indexOf("/uploads");
+  if (idx !== -1) {
+    return `http://185.146.3.132:8080${url.slice(idx)}`;
+  }
+
+  return `http://185.146.3.132:8080${url.startsWith('/') ? url : '/' + url}`
 }
 
 export default function ContactsPage() {
@@ -89,7 +104,7 @@ export default function ContactsPage() {
               </div>
 
               <div className="space-y-6">
-                {company?.city && company?.base && (
+                {(company?.city || company?.street || company?.base) && (
                   <div className="flex items-start gap-4 p-4 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors">
                     <div className="flex-shrink-0 p-2 bg-orange-100 rounded-lg text-orange-600">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +114,9 @@ export default function ContactsPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-stone-900">Адрес офиса</h3>
-                      <p className="text-stone-600 mt-1">{company.city}, {company.base}</p>
+                      <p className="text-stone-600 mt-1">
+                        {[company.city, company.street || company.base].filter(Boolean).join(', ')}
+                      </p>
                       <p className="text-stone-500 text-sm">Казахстан</p>
                     </div>
                   </div>
@@ -114,10 +131,12 @@ export default function ContactsPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-stone-900">Телефон</h3>
-                      <a href="tel:+77770000000" className="block text-stone-600 mt-1 hover:text-orange-600 transition-colors">
-                        +7 777 000 00 00
+                      <a href={`tel:${company?.phone || '+77770000000'}`} className="block text-stone-600 mt-1 hover:text-orange-600 transition-colors">
+                        {company?.phone || '+7 777 000 00 00'}
                       </a>
-                      <span className="text-xs text-stone-400">Пн-Вс 9:00-20:00</span>
+                      <span className="text-xs text-stone-400">
+                        {company?.jobStart && company?.jobEnd ? `Пн-Вс ${company.jobStart}-${company.jobEnd}` : 'Пн-Вс 9:00-20:00'}
+                      </span>
                     </div>
                   </div>
 
@@ -129,8 +148,8 @@ export default function ContactsPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-stone-900">Email</h3>
-                      <a href="mailto:hello@altayboots.kz" className="block text-stone-600 mt-1 hover:text-orange-600 transition-colors">
-                        hello@altayboots.kz
+                      <a href={`mailto:${company?.email || 'hello@altayboots.kz'}`} className="block text-stone-600 mt-1 hover:text-orange-600 transition-colors">
+                        {company?.email || 'hello@altayboots.kz'}
                       </a>
                       <span className="text-xs text-stone-400">По всем вопросам</span>
                     </div>
@@ -155,16 +174,19 @@ export default function ContactsPage() {
               
               <div className="space-y-4 text-stone-300">
                 <div className="flex justify-between items-center border-b border-stone-800 pb-2">
-                  <span>Понедельник - Пятница</span>
-                  <span className="font-medium text-white">9:00 - 20:00</span>
+                  <span>Рабочее время</span>
+                  <span className="font-medium text-white">
+                    {company?.jobStart && company?.jobEnd ? `${company.jobStart} - ${company.jobEnd}` : '9:00 - 20:00'}
+                  </span>
                 </div>
-                <div className="flex justify-between items-center border-b border-stone-800 pb-2">
-                  <span>Суббота</span>
-                  <span className="font-medium text-white">10:00 - 18:00</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Воскресенье</span>
-                  <span className="font-medium text-white">10:00 - 16:00</span>
+                {company?.freeStart && company?.freeEnd && (
+                  <div className="flex justify-between items-center border-b border-stone-800 pb-2">
+                    <span>Перерыв</span>
+                    <span className="font-medium text-white">{company.freeStart} - {company.freeEnd}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center border-b border-stone-800 pb-2 text-stone-400 text-sm italic">
+                  <span>Режим работы может меняться в праздничные дни</span>
                 </div>
               </div>
             </div>

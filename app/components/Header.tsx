@@ -18,7 +18,15 @@ type CompanyData = {
 
 const normalizePhoto = (url?: string) => {
   if (!url) return ''
-  return url.startsWith('http') ? url : `http://185.146.3.132:8080${url}`
+  if (url.startsWith('http')) return url
+
+  // Очищаем путь: оставляем только то, что начинается с /uploads
+  const idx = url.indexOf("/uploads");
+  if (idx !== -1) {
+    return `http://185.146.3.132:8080${url.slice(idx)}`;
+  }
+
+  return `http://185.146.3.132:8080${url.startsWith('/') ? url : '/' + url}`
 }
 
 const Header = () => {
