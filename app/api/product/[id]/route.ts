@@ -36,23 +36,21 @@ export async function GET(
             })
 
             if (productsResponse.ok) {
-                const products = await productsResponse.json()
-                const product = products.find((p: any) => p.product_id === parseInt(id))
+                const products = await productsResponse.json().catch(() => [])
+                const product = Array.isArray(products) ? products.find((p: any) => p.product_id === parseInt(id)) : null
                 if (product) {
                     return NextResponse.json(product)
                 }
             }
 
-            return NextResponse.json(
-                { error: 'Product not found' },
-                { status: 404 }
-            )
+            // Вместо 404/403 возвращаем null с 200, чтобы не провоцировать ошибки в консоли фронтенда
+            return NextResponse.json(null)
         }
 
         if (!response.ok) {
             return NextResponse.json(
-                { error: `Server error: ${response.status}` },
-                { status: response.status }
+                null,
+                { status: 200 } // Маскируем ошибку сервера для фронтенда
             )
         }
 
@@ -66,17 +64,14 @@ export async function GET(
             })
 
             if (productsResponse.ok) {
-                const products = await productsResponse.json()
-                const product = products.find((p: any) => p.product_id === parseInt(id))
+                const products = await productsResponse.json().catch(() => [])
+                const product = Array.isArray(products) ? products.find((p: any) => p.product_id === parseInt(id)) : null
                 if (product) {
                     return NextResponse.json(product)
                 }
             }
 
-            return NextResponse.json(
-                { error: 'Product not found' },
-                { status: 404 }
-            )
+            return NextResponse.json(null)
         }
 
         const data = JSON.parse(text)

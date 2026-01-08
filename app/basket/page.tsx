@@ -41,8 +41,8 @@ type OrderPayload = {
   index: string
 }
 
-const CART_URL = 'api/cart'
-const PRODUCT_URL = 'api/product'
+const CART_URL = '/api/cart'
+const PRODUCT_URL = '/api/product'
 const ORDER_URL = '/api/order'
 
 type PhotoObject = {
@@ -139,9 +139,10 @@ export default function BasketPage() {
           if (text && text.trim()) {
             try {
               const errorData = JSON.parse(text)
-              message = (errorData as { message?: string })?.message || message
+              message = (errorData as { message?: string; error?: string })?.message || (errorData as { message?: string; error?: string })?.error || message
             } catch {
-              // ignore
+              // Если это не JSON, возможно, это простой текст ошибки
+              message = text.length < 100 ? text : message
             }
           }
           throw new Error(message)

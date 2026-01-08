@@ -63,7 +63,6 @@ export default function CatalogPage() {
                     </div>
                 </div>
 
-                {/* Loading State */}
                 {loading && (
                     <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
                         {[...Array(4)].map((_, i) => (
@@ -72,14 +71,12 @@ export default function CatalogPage() {
                     </div>
                 )}
 
-                {/* Error State */}
                 {error && (
                     <div className="rounded-lg bg-red-50 p-4 text-center text-red-700 ring-1 ring-red-200">
                         <p className="font-medium">Упс! {error}</p>
                     </div>
                 )}
 
-                {/* Products Grid */}
                 {!loading && !error && (
                     <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
                         {products.map((product) => (

@@ -63,6 +63,11 @@ const PromotionsSlider = () => {
         const data = await response.json().catch(() => null)
 
         if (!response.ok) {
+          // If it's 403 or 401, we just treat it as no promotions available for the current user/guest
+          if (response.status === 403 || response.status === 401) {
+            setPromotions([])
+            return
+          }
           console.error('Error fetching promotions: Server returned', response.status)
           return
         }
