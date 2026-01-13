@@ -5,6 +5,7 @@ import Footer from "./components/Footer";
 import Header from "./components/Header";
 import ScrollToTop from "./components/ScrollToTop";
 import FetchInterceptor from "./components/FetchInterceptor";
+import { LanguageProvider } from "./i18n/LanguageContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,13 +28,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ru">
       <body>
-        <FetchInterceptor />
-        <ScrollToTop />
-        <Header />
-        {children}
-        <Footer />
+        <LanguageProvider>
+          <FetchInterceptor />
+          <ScrollToTop />
+          <Header />
+          {children}
+          <Footer />
+        </LanguageProvider>
       </body>
     </html>
   );

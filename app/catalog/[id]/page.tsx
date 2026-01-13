@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import ProductCard from '@/app/components/ProductCard'
 import { getCatalogProducts, type CatalogProduct } from '@/app/service/CatalogService'
+import { useLanguage } from '@/app/i18n/LanguageContext'
 
 export default function CatalogPage() {
+    const { t } = useLanguage()
     const params = useParams()
     const router = useRouter()
     const catalogId = params.id ? Number(params.id) : null
@@ -13,6 +15,8 @@ export default function CatalogPage() {
     const [products, setProducts] = useState<CatalogProduct[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 16
 
     useEffect(() => {
         if (catalogId === null) {
@@ -37,6 +41,16 @@ export default function CatalogPage() {
         fetchProducts()
     }, [catalogId])
 
+    // Pagination logic
+    const totalPages = Math.ceil(products.length / itemsPerPage)
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const currentProducts = products.slice(startIndex, startIndex + itemsPerPage)
+
+    const goToPage = (page: number) => {
+        setCurrentPage(page)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+
     return (
         <main className="min-h-screen bg-stone-50">
             <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
@@ -49,15 +63,15 @@ export default function CatalogPage() {
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
-                        Назад к каталогам
+                        {t('catalog.backToCatalogs')}
                     </button>
                     <div className="flex items-center justify-between">
                         <h1 className="text-3xl font-bold tracking-tight text-stone-900 border-l-4 border-orange-500 pl-4">
-                            Товары каталога
+                            {t('catalog.catalogProducts')}
                         </h1>
                         {!loading && !error && (
                             <div className="hidden sm:block text-sm text-stone-500">
-                                {products.length} {products.length === 1 ? 'товар' : 'товаров'}
+                                {products.length} {t('common.items')}
                             </div>
                         )}
                     </div>
@@ -65,7 +79,7 @@ export default function CatalogPage() {
 
                 {loading && (
                     <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
-                        {[...Array(4)].map((_, i) => (
+                        {[...Array(itemsPerPage)].map((_, i) => (
                             <div key={i} className="aspect-[3/4] rounded-lg bg-stone-200 animate-pulse"></div>
                         ))}
                     </div>
@@ -78,23 +92,82 @@ export default function CatalogPage() {
                 )}
 
                 {!loading && !error && (
-                    <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
-                        {products.map((product) => (
-                            <ProductCard
-                                key={product.product_id}
-                                item={product}
-                            />
-                        ))}
+                    <>
+                        <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
+                            {currentProducts.map((product) => (
+                                <ProductCard
+                                    key={product.product_id}
+                                    item={product}
+                                />
+                            ))}
 
-                        {products.length === 0 && (
-                            <div className="col-span-full py-12 text-center text-stone-500 bg-white rounded-xl border border-dashed border-stone-300">
-                                <svg className="w-16 h-16 mx-auto mb-4 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                                </svg>
-                                <p className="text-lg font-medium">В этом каталоге пока нет товаров</p>
+                            {products.length === 0 && (
+                                <div className="col-span-full py-12 text-center text-stone-500 bg-white rounded-xl border border-dashed border-stone-300">
+                                    <svg className="w-16 h-16 mx-auto mb-4 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                    </svg>
+                                    <p className="text-lg font-medium">{t('catalog.noProducts')}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Pagination Controls */}
+                        {totalPages > 1 && (
+                            <div className="mt-16 flex justify-center items-center gap-2">
+                                <button
+                                    onClick={() => goToPage(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                    className="p-2 rounded-lg border border-stone-200 text-stone-600 hover:bg-orange-50 hover:text-orange-600 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-stone-600 transition-all"
+                                    aria-label={t('catalog.prevPage')}
+                                >
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+
+                                <div className="flex gap-1">
+                                    {[...Array(totalPages)].map((_, i) => {
+                                        const page = i + 1
+                                        if (
+                                            totalPages > 7 &&
+                                            page !== 1 &&
+                                            page !== totalPages &&
+                                            Math.abs(page - currentPage) > 2
+                                        ) {
+                                            if (page === 2 && currentPage > 4) return <span key="dots1" className="px-2 text-stone-400">...</span>
+                                            if (page === totalPages - 1 && currentPage < totalPages - 3) return <span key="dots2" className="px-2 text-stone-400">...</span>
+                                            return null
+                                        }
+
+                                        return (
+                                            <button
+                                                key={page}
+                                                onClick={() => goToPage(page)}
+                                                className={`min-w-[40px] h-10 rounded-lg font-medium transition-all ${
+                                                    currentPage === page
+                                                        ? 'bg-orange-500 text-white shadow-md shadow-orange-200'
+                                                        : 'text-stone-600 hover:bg-orange-50 hover:text-orange-600'
+                                                }`}
+                                            >
+                                                {page}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+
+                                <button
+                                    onClick={() => goToPage(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                    className="p-2 rounded-lg border border-stone-200 text-stone-600 hover:bg-orange-50 hover:text-orange-600 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-stone-600 transition-all"
+                                    aria-label={t('catalog.nextPage')}
+                                >
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
                             </div>
                         )}
-                    </div>
+                    </>
                 )}
             </section>
         </main>

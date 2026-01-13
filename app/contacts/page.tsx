@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
 
 type CompanyData = {
   company_id: number
@@ -32,6 +33,7 @@ const normalizePhoto = (url?: string) => {
 }
 
 export default function ContactsPage() {
+  const { t } = useLanguage()
   const [company, setCompany] = useState<CompanyData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -71,16 +73,16 @@ export default function ContactsPage() {
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold tracking-tight text-stone-900 sm:text-5xl">
-            Контакты
+            {t('contacts.title')}
           </h1>
           <p className="mt-4 text-lg text-stone-600 max-w-2xl mx-auto">
-            Свяжитесь с нами удобным для вас способом. Мы всегда рады помочь вам с выбором и ответить на любые вопросы.
+            {t('contacts.subtitle')}
           </p>
         </div>
 
         {/* Contact Cards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Company Info Card */}
+          {/* Coпаmpany Info Card */}
           <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
             <div className="p-8">
               <div className="flex items-center gap-6 mb-8 border-b border-stone-100 pb-8">
@@ -113,11 +115,11 @@ export default function ContactsPage() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-stone-900">Адрес офиса</h3>
+                      <h3 className="font-semibold text-stone-900">{t('contacts.address')}</h3>
                       <p className="text-stone-600 mt-1">
                         {[company.city, company.street || company.base].filter(Boolean).join(', ')}
                       </p>
-                      <p className="text-stone-500 text-sm">Казахстан</p>
+                      <p className="text-stone-500 text-sm">{t('contacts.country')}</p>
                     </div>
                   </div>
                 )}
@@ -130,7 +132,7 @@ export default function ContactsPage() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-stone-900">Телефон</h3>
+                      <h3 className="font-semibold text-stone-900">{t('contacts.phone')}</h3>
                       <a href={`tel:${company?.phone || '+77770000000'}`} className="block text-stone-600 mt-1 hover:text-orange-600 transition-colors">
                         {company?.phone || '+7 777 000 00 00'}
                       </a>
@@ -147,7 +149,7 @@ export default function ContactsPage() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-stone-900">Email</h3>
+                      <h3 className="font-semibold text-stone-900">{t('contacts.email')}</h3>
                       <a href={`mailto:${company?.email || 'hello@altayboots.kz'}`} className="block text-stone-600 mt-1 hover:text-orange-600 transition-colors">
                         {company?.email || 'hello@altayboots.kz'}
                       </a>
@@ -169,44 +171,49 @@ export default function ContactsPage() {
                 <svg className="w-6 h-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Часы работы
+                {t('contacts.workingHours')}
               </h2>
               
               <div className="space-y-4 text-stone-300">
                 <div className="flex justify-between items-center border-b border-stone-800 pb-2">
-                  <span>Рабочее время</span>
+                  <span>{t('contacts.workingTime')}</span>
                   <span className="font-medium text-white">
                     {company?.jobStart && company?.jobEnd ? `${company.jobStart} - ${company.jobEnd}` : '9:00 - 20:00'}
                   </span>
                 </div>
                 {company?.freeStart && company?.freeEnd && (
                   <div className="flex justify-between items-center border-b border-stone-800 pb-2">
-                    <span>Перерыв</span>
+                    <span>{t('contacts.promoDays')}</span>
                     <span className="font-medium text-white">{company.freeStart} - {company.freeEnd}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center border-b border-stone-800 pb-2 text-stone-400 text-sm italic">
-                  <span>Режим работы может меняться в праздничные дни</span>
+                  <span>{t('contacts.workingHoursHint')}</span>
                 </div>
               </div>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-8">
-              <h3 className="text-xl font-bold text-stone-900 mb-4">Нужна помощь?</h3>
+              <h3 className="text-xl font-bold text-stone-900 mb-4">{t('contacts.needHelp')}</h3>
               <p className="text-stone-600 mb-6">
-                Наши специалисты готовы ответить на все ваши вопросы и помочь с выбором идеальной пары обуви.
+                {t('contacts.helpSubtitle')}
               </p>
-              <button className="w-full py-3 px-4 bg-orange-600 text-white font-semibold rounded-xl hover:bg-orange-700 transition-colors shadow-lg shadow-orange-200">
-                Написать в WhatsApp
-              </button>
+              <a 
+                href="https://api.whatsapp.com/send?phone=77752794489"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 px-4 bg-orange-600 text-white font-semibold rounded-xl hover:bg-orange-700 transition-colors shadow-lg shadow-orange-200 block text-center"
+              >
+                {t('contacts.writeWhatsApp')}
+              </a>
             </div>
           </div>
         </div>
 
         {/* Social Media */}
         <div className="mt-16 text-center">
-          <h2 className="text-2xl font-bold text-stone-900 mb-2">Мы в социальных сетях</h2>
-          <p className="text-stone-500 mb-8">Следите за новинками и акциями</p>
+          <h2 className="text-2xl font-bold text-stone-900 mb-2">{t('contacts.socials')}</h2>
+          <p className="text-stone-500 mb-8">{t('contacts.socialsSubtitle')}</p>
           
           <div className="flex justify-center gap-6">
             <a href="#" className="p-4 bg-white rounded-full text-stone-400 hover:text-pink-600 hover:shadow-lg transition-all border border-stone-200">

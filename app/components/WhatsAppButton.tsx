@@ -1,7 +1,7 @@
 'use client'
 
 export default function WhatsAppButton() {
-    const whatsappLink = 'https://api.whatsapp.com/send?phone=7775279448'
+    const whatsappLink = 'https://api.whatsapp.com/send?phone=77752794489'
 
     return (
         <a

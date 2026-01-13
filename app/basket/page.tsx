@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import Loading from '../components/ui/Loading'
+import { useLanguage } from '../i18n/LanguageContext'
 
 type Product = {
   product_id?: number
@@ -76,6 +77,7 @@ const normalizePhoto = (photo?: PhotoObject | string | null): string => {
 }
 
 export default function BasketPage() {
+  const { t } = useLanguage()
   const [items, setItems] = useState<CartItem[]>([])
   const [totalPrice, setTotalPrice] = useState<number>(0)
   const [loading, setLoading] = useState(true)
@@ -387,9 +389,9 @@ export default function BasketPage() {
             <svg className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Каталог
+            {t('header.catalogs')}
           </Link>
-          <h1 className="text-3xl font-bold text-stone-900 border-l-4 border-orange-500 pl-4">Корзина</h1>
+          <h1 className="text-3xl font-bold text-stone-900 border-l-4 border-orange-500 pl-4">{t('basket.title')}</h1>
         </div>
 
         {error && (
@@ -397,10 +399,10 @@ export default function BasketPage() {
             <p className="text-red-800 mb-4">{error}</p>
             {error.includes('Доступ запрещен') || error.includes('войдите') ? (
               <Link
-                href="/signin"
+                href="/auth"
                 className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
               >
-                Войти в аккаунт
+                {t('header.login')}
               </Link>
             ) : null}
           </div>
@@ -416,19 +418,19 @@ export default function BasketPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <h2 className="text-2xl font-bold text-stone-900 mb-2">Заказ успешно оформлен!</h2>
+                  <h2 className="text-2xl font-bold text-stone-900 mb-2">{t('basket.orderSuccess')}</h2>
                   {lastOrderId && (
                     <p className="text-lg font-semibold text-stone-700 mb-4">
-                      Номер вашего заказа: <span className="text-orange-600">#{lastOrderId}</span>
+                      {t('basket.orderNumber')}: <span className="text-orange-600">#{lastOrderId}</span>
                     </p>
                   )}
                   <p className="text-stone-500 max-w-md mx-auto mb-8">
-                    Спасибо за покупку. Чтобы завершить заказ, пожалуйста, оплатите его через WhatsApp. Наш менеджер подтвердит получение платежа.
+                    {t('basket.thanks')}
                   </p>
 
                   <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                     <a
-                      href={`https://wa.me/7775279448?text=${encodeURIComponent(`Здравствуйте! Я хочу оплатить заказ №${lastOrderId || ''}.`)}`}
+                      href={`https://wa.me/77752794489?text=${encodeURIComponent(`Здравствуйте! Я хочу оплатить заказ №${lastOrderId || ''}.`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center px-8 py-4 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-all shadow-lg hover:shadow-green-200 active:scale-[0.98] gap-2"
@@ -436,10 +438,10 @@ export default function BasketPage() {
                       <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                       </svg>
-                      Оплатить через WhatsApp
+                      {t('basket.payWhatsApp')}
                     </a>
                     <Link href="/" className="inline-flex items-center px-8 py-4 bg-stone-100 text-stone-900 font-semibold rounded-xl hover:bg-stone-200 transition-colors">
-                      Продолжить покупки
+                      {t('basket.continueShopping')}
                     </Link>
                   </div>
                 </div>
@@ -448,10 +450,10 @@ export default function BasketPage() {
                   <svg className="mx-auto h-16 w-16 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                   </svg>
-                  <h2 className="mt-4 text-xl font-bold text-stone-900">Ваша корзина пуста</h2>
-                  <p className="mt-2 text-stone-500 mb-8">Посмотрите наш каталог, там много интересного!</p>
+                  <h2 className="mt-4 text-xl font-bold text-stone-900">{t('basket.empty')}</h2>
+                  <p className="mt-2 text-stone-500 mb-8">{t('basket.emptyHint')}</p>
                   <Link href="/" className="inline-flex items-center px-6 py-3 bg-stone-900 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors">
-                    Перейти в каталог
+                    {t('basket.goToCatalog')}
                   </Link>
                 </div>
               )
@@ -472,7 +474,7 @@ export default function BasketPage() {
                             {mainPhoto ? (
                               <img src={mainPhoto} alt={displayName} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-stone-400 text-sm">Нет фото</div>
+                              <div className="w-full h-full flex items-center justify-center text-stone-400 text-sm">{t('basket.noPhoto')}</div>
                             )}
                           </div>
 
@@ -518,7 +520,7 @@ export default function BasketPage() {
                                 onClick={() => handleDeleteItem(item.cart_item_id)}
                                 disabled={deletingId === item.cart_item_id}
                                 className="text-stone-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50"
-                                title="Удалить из корзины"
+                                title={t('basket.deleteFromCart')}
                               >
                                 {deletingId === item.cart_item_id ? (
                                   <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -538,16 +540,16 @@ export default function BasketPage() {
 
                 {/* Order Summary & Checkout */}
                 <div className="mt-16 bg-white rounded-2xl shadow-lg border border-stone-200 p-8 lg:col-span-5 lg:mt-0 sticky top-24">
-                  <h2 className="text-xl font-bold text-stone-900 mb-6 pb-6 border-b border-stone-100">Итого</h2>
+                  <h2 className="text-xl font-bold text-stone-900 mb-6 pb-6 border-b border-stone-100">{t('basket.total')}</h2>
 
                   <div className="flex justify-between items-center mb-8">
-                    <span className="text-stone-600">Сумма заказа</span>
+                    <span className="text-stone-600">{t('basket.orderSummary')}</span>
                     <span className="text-2xl font-bold text-stone-900">{total} ₸</span>
                   </div>
 
                   <form onSubmit={handleOrderSubmit} className="space-y-4">
                     <div>
-                      <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wider mb-4">Данные доставки</h3>
+                      <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wider mb-4">{t('basket.deliveryData')}</h3>
                       {orderMessage && orderMessage !== 'SUCCESS' && (
                         <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg mb-4">{orderMessage}</div>
                       )}
@@ -556,14 +558,14 @@ export default function BasketPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <input
                         className="col-span-1 rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
-                        placeholder="Фамилия"
+                        placeholder={t('basket.surname')}
                         value={orderPayload.surName}
                         onChange={(e) => setOrderPayload((p) => ({ ...p, surName: e.target.value }))}
                         required
                       />
                       <input
                         className="col-span-1 rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
-                        placeholder="Имя"
+                        placeholder={t('basket.name')}
                         value={orderPayload.lastName}
                         onChange={(e) => setOrderPayload((p) => ({ ...p, lastName: e.target.value }))}
                         required
@@ -572,7 +574,7 @@ export default function BasketPage() {
 
                     <input
                       className="w-full rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
-                      placeholder="Регион / Область"
+                      placeholder={t('basket.region')}
                       value={orderPayload.region}
                       onChange={(e) => setOrderPayload((p) => ({ ...p, region: e.target.value }))}
                       required
@@ -580,7 +582,7 @@ export default function BasketPage() {
 
                     <input
                       className="w-full rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
-                      placeholder="Город или район"
+                      placeholder={t('basket.city')}
                       value={orderPayload.cityOrDistrict}
                       onChange={(e) => setOrderPayload((p) => ({ ...p, cityOrDistrict: e.target.value }))}
                       required
@@ -589,14 +591,14 @@ export default function BasketPage() {
                     <div className="grid grid-cols-3 gap-4">
                       <input
                         className="col-span-2 rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
-                        placeholder="Улица"
+                        placeholder={t('basket.street')}
                         value={orderPayload.street}
                         onChange={(e) => setOrderPayload((p) => ({ ...p, street: e.target.value }))}
                         required
                       />
                       <input
                         className="col-span-1 rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
-                        placeholder="Дом/Кв"
+                        placeholder={t('basket.house')}
                         value={orderPayload.houseOrApartment}
                         onChange={(e) => setOrderPayload((p) => ({ ...p, houseOrApartment: e.target.value }))}
                         required
@@ -605,7 +607,7 @@ export default function BasketPage() {
 
                     <input
                       className="w-full rounded-lg border-stone-200 bg-stone-50 px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500"
-                      placeholder="Почтовый индекс"
+                      placeholder={t('basket.postcode')}
                       value={orderPayload.index}
                       onChange={(e) => setOrderPayload((p) => ({ ...p, index: e.target.value }))}
                       required
@@ -619,12 +621,12 @@ export default function BasketPage() {
                       {orderLoading ? (
                         <span className="flex items-center gap-2">
                           <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                          Обработка...
+                          {t('basket.processing')}
                         </span>
-                      ) : 'Оформить заказ'}
+                      ) : t('basket.checkout')}
                     </button>
                     <p className="text-xs text-center text-stone-400 mt-4">
-                      Нажимая кнопку, вы соглашаетесь с условиями обработки персональных данных
+                      {t('basket.dataPolicy')}
                     </p>
                   </form>
                 </div>

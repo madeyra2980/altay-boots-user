@@ -6,6 +6,7 @@ import Image from 'next/image'
 import logo from '../utils/logo.jpg'
 import Loading from './ui/Loading'
 import { getCatalogs, Catalog } from '../service/CatalogService'
+import { useLanguage } from '../i18n/LanguageContext'
 
 type CompanyData = {
   company_id: number
@@ -30,11 +31,13 @@ const normalizePhoto = (url?: string) => {
 }
 
 const Header = () => {
+  const { t, language, setLanguage } = useLanguage()
   const [company, setCompany] = useState<CompanyData | null>(null)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [catalogs, setCatalogs] = useState<Catalog[]>([])
   const [showCatalogDropdown, setShowCatalogDropdown] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const serverSnapshot = { isAuthed: false, userId: '', cartCount: 0 }
 
@@ -85,6 +88,29 @@ const Header = () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [showCatalogDropdown])
+
+  // Close mobile menu on resize to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) { // md breakpoint
+        setIsMobileMenuOpen(false)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // Disable scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isMobileMenuOpen])
 
   const getClientSnapshot = () => {
     if (typeof window === 'undefined') return serverSnapshot
@@ -143,8 +169,28 @@ const Header = () => {
       {isLoggingOut && <Loading fullScreen />}
       <header className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-md shadow-sm' : 'bg-white'}`}>
         {/* Top Bar - decorative or utility */}
-        <div className="bg-stone-900 text-stone-200 text-xs py-1.5 px-4 text-center tracking-wide uppercase">
-          <p>{company?.text || 'Premium Handcrafted Boots'}</p>
+        <div className="bg-stone-900 text-stone-200 text-xs py-1.5 px-4 text-center tracking-wide uppercase flex justify-between items-center max-w-7xl mx-auto w-full">
+          <p className="flex-1">{company?.text || t('header.handcrafted')}</p>
+          <div className="flex gap-3 ml-4">
+            <button
+              onClick={() => setLanguage('ru')}
+              className={`hover:text-orange-500 transition-colors ${language === 'ru' ? 'text-orange-500 font-bold' : ''}`}
+            >
+              RU
+            </button>
+            <button
+              onClick={() => setLanguage('kk')}
+              className={`hover:text-orange-500 transition-colors ${language === 'kk' ? 'text-orange-500 font-bold' : ''}`}
+            >
+              KZ
+            </button>
+            <button
+              onClick={() => setLanguage('en')}
+              className={`hover:text-orange-500 transition-colors ${language === 'en' ? 'text-orange-500 font-bold' : ''}`}
+            >
+              EN
+            </button>
+          </div>
         </div>
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -173,7 +219,7 @@ const Header = () => {
             {/* Navigation */}
             <nav className="hidden md:flex space-x-8">
               <Link href="/" className="text-sm font-medium text-stone-600 hover:text-orange-600 transition-colors">
-                Главная
+                {t('header.home')}
               </Link>
 
               {/* Catalog Dropdown */}
@@ -183,7 +229,7 @@ const Header = () => {
                   onMouseEnter={() => setShowCatalogDropdown(true)}
                   className="text-sm font-medium text-stone-600 hover:text-orange-600 transition-colors flex items-center gap-1"
                 >
-                  Каталоги
+                  {t('header.catalogs')}
                   <svg
                     className={`w-4 h-4 transition-transform duration-200 ${showCatalogDropdown ? 'rotate-180' : ''}`}
                     fill="none"
@@ -219,7 +265,7 @@ const Header = () => {
                                   <p className="font-semibold text-stone-900 group-hover:text-orange-600 transition-colors">
                                     {catalog.name}
                                   </p>
-                                  <p className="text-xs text-stone-500">Нажмите для просмотра товаров</p>
+                                  <p className="text-xs text-stone-500">{t('header.catalogHint')}</p>
                                 </div>
                                 <svg className="w-4 h-4 text-stone-400 group-hover:text-orange-600 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -231,7 +277,7 @@ const Header = () => {
                       </ul>
                     ) : (
                       <div className="px-6 py-8 text-center text-stone-500">
-                        <p className="text-sm">Каталоги пока не добавлены</p>
+                        <p className="text-sm">{t('header.noCatalogs')}</p>
                       </div>
                     )}
                   </div>
@@ -239,18 +285,35 @@ const Header = () => {
               </div>
 
               <Link href="/my-orders" className="text-sm font-medium text-stone-600 hover:text-orange-600 transition-colors">
-                Мои заказы
+                {t('header.myOrders')}
               </Link>
               <Link href="/contacts" className="text-sm font-medium text-stone-600 hover:text-orange-600 transition-colors">
-                Контакты
+                {t('header.contacts')}
               </Link>
             </nav>
 
             {/* User Actions */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 sm:gap-6">
+              {/* Mobile Menu Button */}
+              <button
+                className="md:hidden p-2 text-stone-600 hover:text-orange-600 transition-colors -ml-2"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="Toggle menu"
+              >
+                {isMobileMenuOpen ? (
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ) : (
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                )}
+              </button>
+
               {/* WhatsApp */}
               <a
-                href="https://api.whatsapp.com/send?phone=7775279448"
+                href="https://api.whatsapp.com/send?phone=77752794489"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-center text-green-500 hover:text-green-600 transition-colors"
@@ -263,8 +326,12 @@ const Header = () => {
               </a>
 
               {/* Cart */}
-              <Link href="/basket" className="group relative flex items-center gap-2 text-stone-600 hover:text-orange-600 transition-colors">
-                <span className="sr-only">Корзина</span>
+              <Link 
+                href="/basket" 
+                className="group relative flex items-center gap-2 text-stone-600 hover:text-orange-600 transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <span className="sr-only">{t('header.cart')}</span>
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                 </svg>
@@ -275,30 +342,111 @@ const Header = () => {
                 )}
               </Link>
 
-              <div className="border-l border-stone-200 h-6 mx-1"></div>
+              <div className="border-l border-stone-200 h-6 mx-1 hidden sm:block"></div>
 
-              {isAuthed ? (
-                <div className="flex items-center gap-3">
-                  {userId && (
-                    <span className="hidden lg:block text-xs font-medium text-stone-400">
-                      {userId}
-                    </span>
-                  )}
-                  <button
-                    onClick={handleLogout}
-                    className="text-sm font-semibold text-stone-900 hover:text-orange-600 transition-colors"
-                  >
-                    Выйти
-                  </button>
-                </div>
-              ) : (
-                <Link href="/signin" className="text-sm font-semibold text-stone-900 hover:text-orange-600 transition-colors">
-                  Войти
-                </Link>
-              )}
+              <div className="hidden sm:block">
+                {isAuthed ? (
+                  <div className="flex items-center gap-3">
+                    {userId && (
+                      <span className="hidden lg:block text-xs font-medium text-stone-400">
+                        {userId}
+                      </span>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="text-sm font-semibold text-stone-900 hover:text-orange-600 transition-colors"
+                    >
+                      {t('header.logout')}
+                    </button>
+                  </div>
+                ) : (
+                  <Link href="/auth" className="text-sm font-semibold text-stone-900 hover:text-orange-600 transition-colors">
+                    {t('header.login')}
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Mobile Navigation Overlay */}
+        {isMobileMenuOpen && (
+          <div 
+            className="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+
+        {/* Mobile Navigation Panel */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden fixed top-16 left-0 right-0 z-50 bg-white border-t border-stone-100 shadow-xl animate-in slide-in-from-top duration-300 max-h-[calc(100vh-4rem)] overflow-y-auto">
+            <nav className="flex flex-col p-4 space-y-4">
+              <Link 
+                href="/" 
+                className="text-base font-medium text-stone-900 hover:text-orange-600 px-2 py-1"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {t('header.home')}
+              </Link>
+              
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-stone-400 uppercase tracking-wider px-2">{t('header.catalogs')}</p>
+                <div className="grid grid-cols-1 gap-1">
+                  {catalogs.map((catalog) => (
+                    <Link
+                      key={catalog.catalog_id}
+                      href={`/catalog/${catalog.catalog_id}`}
+                      className="text-sm text-stone-600 hover:text-orange-600 hover:bg-orange-50 px-4 py-2 rounded-lg transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {catalog.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <Link 
+                href="/my-orders" 
+                className="text-base font-medium text-stone-900 hover:text-orange-600 px-2 py-1"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {t('header.myOrders')}
+              </Link>
+              <Link 
+                href="/contacts" 
+                className="text-base font-medium text-stone-900 hover:text-orange-600 px-2 py-1"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {t('header.contacts')}
+              </Link>
+              
+              <div className="border-t border-stone-100 pt-4">
+                {isAuthed ? (
+                  <div className="flex flex-col gap-3 px-2">
+                    {userId && <p className="text-xs text-stone-400">ID: {userId}</p>}
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="text-left text-base font-semibold text-stone-900 hover:text-orange-600"
+                    >
+                      {t('header.logout')}
+                    </button>
+                  </div>
+                ) : (
+                  <Link 
+                    href="/auth" 
+                    className="text-base font-semibold text-stone-900 hover:text-orange-600 px-2"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {t('header.login')}
+                  </Link>
+                )}
+              </div>
+            </nav>
+          </div>
+        )}
       </header>
     </>
   )

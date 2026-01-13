@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useLanguage } from '../i18n/LanguageContext'
 
 interface PromotionPhoto {
   photo_id: number
@@ -50,6 +51,7 @@ const formatDate = (dateString: string) => {
 }
 
 const PromotionsSlider = () => {
+  const { t } = useLanguage()
   const [promotions, setPromotions] = useState<Promotion[]>([])
   const [currentSlide, setCurrentSlide] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -194,16 +196,16 @@ const PromotionsSlider = () => {
                       {/* Dates & CTA */}
                       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mt-8">
                         <button className="px-8 py-3 bg-white text-stone-900 font-bold rounded-lg hover:bg-stone-100 transition-colors shadow-xl">
-                          Подробнее
+                          {t('home.promotionMore')}
                         </button>
                         <div className="flex flex-col gap-1 text-xs text-stone-400 font-medium bg-black/30 backdrop-blur-md px-4 py-2 rounded-lg border border-white/10">
                           <div className="flex items-center gap-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                            <span>Начало: {formatDate(promotion.startDate)}</span>
+                            <span>{t('home.promotionStart')}: {formatDate(promotion.startDate)}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                            <span>Конец: {formatDate(promotion.endDate)}</span>
+                            <span>{t('home.promotionEnd')}: {formatDate(promotion.endDate)}</span>
                           </div>
                         </div>
                       </div>

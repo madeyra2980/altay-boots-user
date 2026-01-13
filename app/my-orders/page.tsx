@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import ConfirmAlert from '../components/ui/ConfirmAlert'
 import Loading from '../components/ui/Loading'
+import { useLanguage } from '../i18n/LanguageContext'
 
 type OrderItem = {
   productId?: number
@@ -29,6 +30,7 @@ type Order = {
 const ORDERS_URL = 'http://185.146.3.132:8080/api/v1/user/orders'
 
 export default function MyOrdersPage() {
+  const { t } = useLanguage()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -147,21 +149,21 @@ export default function MyOrdersPage() {
             <svg className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Каталог
+            {t('header.catalogs')}
           </Link>
-          <h1 className="text-3xl font-bold text-stone-900 border-l-4 border-orange-500 pl-4">Мои заказы</h1>
+          <h1 className="text-3xl font-bold text-stone-900 border-l-4 border-orange-500 pl-4">{t('orders.title')}</h1>
         </div>
 
         {/* Confirmation Modal */}
         <ConfirmAlert 
            isOpen={isConfirmOpen}
-           title="Удалить заказ?"
-           message={`Вы уверены, что хотите удалить заказ #${deletingOrderId}? Это действие нельзя отменить.`}
+           title={t('orders.deleteConfirmTitle')}
+           message={t('orders.deleteConfirmMessage').replace('#{id}', `#${deletingOrderId}`)}
            onConfirm={handleDelete}
            onCancel={() => setIsConfirmOpen(false)}
            isLoading={isDeleting}
-           confirmText="Да, удалить"
-           cancelText="Отмена"
+           confirmText={t('common.delete')}
+           cancelText={t('common.cancel')}
            type="danger"
         />
 
@@ -223,7 +225,7 @@ export default function MyOrdersPage() {
                       {!isPaid && isActive && (
                         <div className="mt-2">
                            <a
-                            href={`https://wa.me/7775279448?text=${encodeURIComponent(`Здравствуйте! Я хочу оплатить заказ №${orderId}.`)}`}
+                            href={`https://wa.me/77752794489?text=${encodeURIComponent(`Здравствуйте! Я хочу оплатить заказ №${orderId}.`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-2 py-1 rounded-md border border-green-200 transition-colors"
