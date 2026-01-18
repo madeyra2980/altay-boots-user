@@ -34,7 +34,7 @@ export default function MyOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Delete handling
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [deletingOrderId, setDeletingOrderId] = useState<number | null>(null)
@@ -51,7 +51,7 @@ export default function MyOrdersPage() {
   useEffect(() => {
     const fetchOrders = async () => {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-     
+
       if (!token) {
         setError('Войдите, чтобы увидеть заказы')
         setLoading(false)
@@ -91,7 +91,7 @@ export default function MyOrdersPage() {
   }
 
   const handleSoftDelete = (orderId: number) => {
-    setOrders(prev => prev.map(order => 
+    setOrders(prev => prev.map(order =>
       order.order_id === orderId ? { ...order, active: false } : order
     ))
   }
@@ -135,7 +135,7 @@ export default function MyOrdersPage() {
   }
 
   if (loading) {
-     return <Loading fullScreen />
+    return <Loading fullScreen />
   }
 
   return (
@@ -155,23 +155,23 @@ export default function MyOrdersPage() {
         </div>
 
         {/* Confirmation Modal */}
-        <ConfirmAlert 
-           isOpen={isConfirmOpen}
-           title={t('orders.deleteConfirmTitle')}
-           message={t('orders.deleteConfirmMessage').replace('#{id}', `#${deletingOrderId}`)}
-           onConfirm={handleDelete}
-           onCancel={() => setIsConfirmOpen(false)}
-           isLoading={isDeleting}
-           confirmText={t('common.delete')}
-           cancelText={t('common.cancel')}
-           type="danger"
+        <ConfirmAlert
+          isOpen={isConfirmOpen}
+          title={t('orders.deleteConfirmTitle')}
+          message={t('orders.deleteConfirmMessage').replace('#{id}', `#${deletingOrderId}`)}
+          onConfirm={handleDelete}
+          onCancel={() => setIsConfirmOpen(false)}
+          isLoading={isDeleting}
+          confirmText={t('common.delete')}
+          cancelText={t('common.cancel')}
+          type="danger"
         />
 
         {error && (
           <div className="rounded-lg bg-red-50 p-4 border border-red-200 text-center mb-8">
             <p className="text-red-800 flex items-center justify-center gap-2">
-               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-               {error}
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              {error}
             </p>
           </div>
         )}
@@ -203,20 +203,20 @@ export default function MyOrdersPage() {
               const isActive = order.active !== false
 
               return (
-                <div 
-                   key={`${order.orderStartDate}-${idx}`} 
-                   className={`bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden hover:shadow-md transition-all duration-300 ${!isActive ? 'opacity-60 grayscale-[0.5]' : ''}`}
+                <div
+                  key={`${order.orderStartDate}-${idx}`}
+                  className={`bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden hover:shadow-md transition-all duration-300 ${!isActive ? 'opacity-60 grayscale-[0.5]' : ''}`}
                 >
                   <div className="px-6 py-4 border-b border-stone-100 bg-stone-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-3">
-                         <h3 className={`text-lg font-bold ${isActive ? 'text-stone-900' : 'text-stone-400'}`}>Заказ #{orderId}</h3>
-                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium 
-                           ${isActive 
-                             ? (isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800')
-                             : 'bg-stone-100 text-stone-500'}`}>
-                           {isPaid ? 'Оплачено' : 'Ожидает оплаты'}
-                         </span>
+                        <h3 className={`text-lg font-bold ${isActive ? 'text-stone-900' : 'text-stone-400'}`}>Заказ #{orderId}</h3>
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium 
+                           ${isActive
+                            ? (isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800')
+                            : 'bg-stone-100 text-stone-500'}`}>
+                          {isPaid ? 'Оплачено' : 'Ожидает оплаты'}
+                        </span>
                       </div>
                       <p className="text-sm text-stone-500 flex items-center gap-2">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
@@ -224,7 +224,7 @@ export default function MyOrdersPage() {
                       </p>
                       {!isPaid && isActive && (
                         <div className="mt-2">
-                           <a
+                          <a
                             href={`https://wa.me/77752794489?text=${encodeURIComponent(`Здравствуйте! Я хочу оплатить заказ №${orderId}.`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -249,7 +249,7 @@ export default function MyOrdersPage() {
                           Удалить
                         </button>
                       )}
-                      
+
                       {order.order_id && (
                         <button
                           onClick={() => confirmDelete(order.order_id!)}
@@ -278,7 +278,7 @@ export default function MyOrdersPage() {
                             >
                               <div className="flex items-center gap-4">
                                 <div className="h-12 w-12 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-400">
-                                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                 </div>
                                 <div>
                                   <p className="font-medium text-stone-900 group-hover:text-orange-600 transition-colors cursor-default">{name}</p>

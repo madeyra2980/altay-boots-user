@@ -153,11 +153,6 @@ export default function PromotionPage() {
                 </span>
               </div>
 
-              <div className="absolute bottom-0 left-0 right-0 p-8 sm:p-10 z-10 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight drop-shadow-md mb-2">
-                  {promotion.name}
-                </h1>
-              </div>
             </div>
           )}
 

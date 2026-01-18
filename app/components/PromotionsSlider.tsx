@@ -173,43 +173,11 @@ const PromotionsSlider = () => {
                   </div>
                 )}
 
-                {/* Content */}
-                <div className="absolute inset-0 flex items-center">
-                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-                    <div className="max-w-2xl text-white space-y-6 animate-fade-in-up">
-                      {/* Discount Badge */}
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-600/90 backdrop-blur-sm border border-orange-500/50 text-white text-sm font-semibold shadow-lg shadow-orange-900/20">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                        <span>-{promotion.percentageDiscounted}% Скидка</span>
-                      </div>
-
-                      {/* Title */}
-                      <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white leading-tight drop-shadow-sm">
-                        {promotion.name}
-                      </h2>
-
-                      {/* Description */}
-                      <p className="text-lg sm:text-xl text-stone-200 line-clamp-2 max-w-xl leading-relaxed drop-shadow-sm">
-                        {promotion.description}
-                      </p>
-
-                      {/* Dates & CTA */}
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mt-8">
-                        <button className="px-8 py-3 bg-white text-stone-900 font-bold rounded-lg hover:bg-stone-100 transition-colors shadow-xl">
-                          {t('home.promotionMore')}
-                        </button>
-                        <div className="flex flex-col gap-1 text-xs text-stone-400 font-medium bg-black/30 backdrop-blur-md px-4 py-2 rounded-lg border border-white/10">
-                          <div className="flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                            <span>{t('home.promotionStart')}: {formatDate(promotion.startDate)}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                            <span>{t('home.promotionEnd')}: {formatDate(promotion.endDate)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                {/* Discount Badge - Positioned at top */}
+                <div className="absolute top-6 left-6">
+                  <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-orange-600/90 backdrop-blur-sm border border-orange-500/50 text-white text-sm font-semibold shadow-lg shadow-orange-900/20">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    <span>-{promotion.percentageDiscounted}% Скидка</span>
                   </div>
                 </div>
               </Link>

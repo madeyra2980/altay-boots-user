@@ -14,6 +14,7 @@ type SignUpParams = {
 type SignInResult = {
   token?: string
   userName?: string | null
+  userId?: string | number | null
   raw: unknown
 }
 
@@ -35,8 +36,9 @@ export async function signIn({ phone, password }: SignInParams): Promise<SignInR
 
   const token = (data as { token?: string }).token
   const userName = (data as { name?: string }).name || null
+  const userId = (data as { userId?: string | number }).userId || null
 
-  return { token, userName, raw: data }
+  return { token, userName, userId, raw: data }
 }
 
 export async function signUp({ name, phone, password }: SignUpParams): Promise<SignInResult> {
@@ -57,6 +59,7 @@ export async function signUp({ name, phone, password }: SignUpParams): Promise<S
 
   const token = (data as { token?: string }).token
   const userName = (data as { name?: string }).name || name || null
+  const userId = (data as { userId?: string | number }).userId || null
 
-  return { token, userName, raw: data }
+  return { token, userName, userId, raw: data }
 }

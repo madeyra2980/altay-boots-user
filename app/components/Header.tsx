@@ -226,7 +226,6 @@ const Header = () => {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setShowCatalogDropdown(!showCatalogDropdown)}
-                  onMouseEnter={() => setShowCatalogDropdown(true)}
                   className="text-sm font-medium text-stone-600 hover:text-orange-600 transition-colors flex items-center gap-1"
                 >
                   {t('header.catalogs')}
@@ -244,7 +243,6 @@ const Header = () => {
                 {showCatalogDropdown && (
                   <div
                     className="absolute top-full left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-stone-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200"
-                    onMouseLeave={() => setShowCatalogDropdown(false)}
                   >
                     {catalogs.length > 0 ? (
                       <ul className="py-2">
@@ -326,8 +324,8 @@ const Header = () => {
               </a>
 
               {/* Cart */}
-              <Link 
-                href="/basket" 
+              <Link
+                href="/basket"
                 className="group relative flex items-center gap-2 text-stone-600 hover:text-orange-600 transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -371,7 +369,7 @@ const Header = () => {
 
         {/* Mobile Navigation Overlay */}
         {isMobileMenuOpen && (
-          <div 
+          <div
             className="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300"
             onClick={() => setIsMobileMenuOpen(false)}
           />
@@ -381,14 +379,14 @@ const Header = () => {
         {isMobileMenuOpen && (
           <div className="md:hidden fixed top-16 left-0 right-0 z-50 bg-white border-t border-stone-100 shadow-xl animate-in slide-in-from-top duration-300 max-h-[calc(100vh-4rem)] overflow-y-auto">
             <nav className="flex flex-col p-4 space-y-4">
-              <Link 
-                href="/" 
+              <Link
+                href="/"
                 className="text-base font-medium text-stone-900 hover:text-orange-600 px-2 py-1"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t('header.home')}
               </Link>
-              
+
               <div className="space-y-2">
                 <p className="text-xs font-bold text-stone-400 uppercase tracking-wider px-2">{t('header.catalogs')}</p>
                 <div className="grid grid-cols-1 gap-1">
@@ -405,21 +403,21 @@ const Header = () => {
                 </div>
               </div>
 
-              <Link 
-                href="/my-orders" 
+              <Link
+                href="/my-orders"
                 className="text-base font-medium text-stone-900 hover:text-orange-600 px-2 py-1"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t('header.myOrders')}
               </Link>
-              <Link 
-                href="/contacts" 
+              <Link
+                href="/contacts"
                 className="text-base font-medium text-stone-900 hover:text-orange-600 px-2 py-1"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t('header.contacts')}
               </Link>
-              
+
               <div className="border-t border-stone-100 pt-4">
                 {isAuthed ? (
                   <div className="flex flex-col gap-3 px-2">
@@ -435,8 +433,8 @@ const Header = () => {
                     </button>
                   </div>
                 ) : (
-                  <Link 
-                    href="/auth" 
+                  <Link
+                    href="/auth"
                     className="text-base font-semibold text-stone-900 hover:text-orange-600 px-2"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >

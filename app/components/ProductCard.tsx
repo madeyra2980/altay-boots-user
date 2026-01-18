@@ -207,6 +207,71 @@ export default function ProductCard({ item }: { item: Product }) {
           {item.description && (
             <p className="mt-1 text-sm text-stone-500 line-clamp-2">{item.description}</p>
           )}
+
+          {/* Sizes */}
+          {item.sizes && (
+            <div className="mt-3">
+              <div className="flex flex-wrap gap-1.5">
+                {(() => {
+                  try {
+                    // Try to parse as JSON array
+                    const parsedSizes = JSON.parse(item.sizes);
+                    if (Array.isArray(parsedSizes)) {
+                      return parsedSizes.slice(0, 6).map((size: string, idx: number) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-0.5 border border-stone-200 rounded text-stone-700 bg-white text-xs font-medium"
+                        >
+                          {size}
+                        </span>
+                      ));
+                    }
+                  } catch (e) {
+                    // If not JSON, handle as string
+                  }
+
+                  // Handle string format
+                  if (typeof item.sizes !== 'string') {
+                    return null;
+                  }
+
+                  const sizesStr = item.sizes.trim();
+
+                  // If sizes are separated by commas, spaces, or other delimiters
+                  if (/[,\s\-\/]/.test(sizesStr)) {
+                    const sizesArray = sizesStr.split(/[,\s\-\/]+/).filter(s => s.length > 0);
+                    return sizesArray.slice(0, 6).map((size: string, idx: number) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-0.5 border border-stone-200 rounded text-stone-700 bg-white text-xs font-medium"
+                      >
+                        {size}
+                      </span>
+                    ));
+                  }
+
+                  // If sizes are concatenated without delimiters (e.g. "39404142")
+                  // Split by 2 characters (shoe sizes are typically 2 digits)
+                  if (sizesStr.length >= 4 && /^\d+$/.test(sizesStr)) {
+                    const sizesArray: string[] = [];
+                    for (let i = 0; i < sizesStr.length && i < 12; i += 2) {
+                      sizesArray.push(sizesStr.slice(i, i + 2));
+                    }
+                    return sizesArray.map((size: string, idx: number) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-0.5 border border-stone-200 rounded text-stone-700 bg-white text-xs font-medium"
+                      >
+                        {size}
+                      </span>
+                    ));
+                  }
+
+                  return null;
+                })()}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="mt-4 flex items-end justify-between gap-4 border-t border-stone-100 pt-4 relative">

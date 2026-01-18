@@ -362,6 +362,7 @@ export default function ProductPage() {
                   <div className="flex flex-wrap gap-2">
                     {(() => {
                       try {
+                        // Попробуем распарсить как JSON массив
                         const parsedSizes = JSON.parse(product.sizes);
                         if (Array.isArray(parsedSizes)) {
                           return parsedSizes.map((size: string) => (
@@ -373,10 +374,50 @@ export default function ProductPage() {
                             </span>
                           ));
                         }
-                        return <span className="text-stone-600">{product.sizes}</span>;
                       } catch (e) {
-                        return <span className="text-stone-600">{product.sizes}</span>;
+                        // Если не JSON, обработаем как строку
                       }
+
+                      // Обработка строкового формата
+                      // Проверяем, что это строка
+                      if (typeof product.sizes !== 'string') {
+                        return <span className="text-stone-600">{String(product.sizes)}</span>;
+                      }
+
+                      const sizesStr = product.sizes.trim();
+
+                      // Если размеры разделены запятыми, пробелами или другими разделителями
+                      if (/[,\s\-\/]/.test(sizesStr)) {
+                        const sizesArray = sizesStr.split(/[,\s\-\/]+/).filter(s => s.length > 0);
+                        return sizesArray.map((size: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="px-4 py-2 border border-stone-200 rounded-lg text-stone-800 bg-white text-sm font-medium"
+                          >
+                            {size}
+                          </span>
+                        ));
+                      }
+
+                      // Если размеры слиплись без разделителей (например "39404142")
+                      // Разобьем по 2 символа (размеры обуви обычно двузначные)
+                      if (sizesStr.length >= 4 && /^\d+$/.test(sizesStr)) {
+                        const sizesArray: string[] = [];
+                        for (let i = 0; i < sizesStr.length; i += 2) {
+                          sizesArray.push(sizesStr.slice(i, i + 2));
+                        }
+                        return sizesArray.map((size: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="px-4 py-2 border border-stone-200 rounded-lg text-stone-800 bg-white text-sm font-medium"
+                          >
+                            {size}
+                          </span>
+                        ));
+                      }
+
+                      // Иначе просто выведем строку как есть
+                      return <span className="text-stone-600">{product.sizes}</span>;
                     })()}
                   </div>
                 </div>
