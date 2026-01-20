@@ -140,7 +140,7 @@ const PromotionsSlider = () => {
   }
 
   return (
-    <div className="relative w-full h-[600px] overflow-hidden bg-stone-900 group">
+    <div className="relative w-full h-[600px] overflow-hidden bg-white group">
       {/* Slides */}
       <div className="relative w-full h-full">
         {promotions.map((promotion, index) => {
@@ -153,31 +153,34 @@ const PromotionsSlider = () => {
                 }`}
             >
               <Link href={`/promotions/${promotion.promotion_id}`} className="block w-full h-full relative cursor-pointer">
-                {/* Background Image */}
-                {imageUrl ? (
-                  <>
-                    <Image
-                      src={imageUrl}
-                      alt={promotion.name}
-                      fill
-                      className="object-cover"
-                      priority={index === 0}
-                    />
-                    {/* Modern Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/40 to-transparent opacity-80" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-stone-900/80 via-transparent to-transparent opacity-60" />
-                  </>
-                ) : (
-                  <div className="w-full h-full bg-stone-800 flex items-center justify-center">
-                    <span className="text-stone-600">No Image</span>
-                  </div>
-                )}
+                {/* Padding wrapper to match header alignment */}
+                <div className="h-full px-4 sm:px-6 lg:px-8">
+                  {/* Centered Container matching header width */}
+                  <div className="mx-auto max-w-7xl h-full relative">
+                    {/* Background Image */}
+                    {imageUrl ? (
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={imageUrl}
+                          alt={promotion.name}
+                          fill
+                          className="object-cover object-center"
+                          priority={index === 0}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full h-full bg-stone-800 flex items-center justify-center">
+                        <span className="text-stone-600">No Image</span>
+                      </div>
+                    )}
 
-                {/* Discount Badge - Positioned at top */}
-                <div className="absolute top-6 left-6">
-                  <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-orange-600/90 backdrop-blur-sm border border-orange-500/50 text-white text-sm font-semibold shadow-lg shadow-orange-900/20">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                    <span>-{promotion.percentageDiscounted}% Скидка</span>
+                    {/* Discount Badge - Positioned inside the centered container */}
+                    <div className="absolute top-6 left-0 z-20">
+                      <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-orange-600/90 backdrop-blur-sm border border-orange-500/50 text-white text-sm font-semibold shadow-lg shadow-orange-900/20">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        <span>-{promotion.percentageDiscounted}% Скидка</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Link>
@@ -191,14 +194,14 @@ const PromotionsSlider = () => {
         <>
           <button
             onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100 border border-white/10"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/70 backdrop-blur-md text-black hover:bg-white/90 transition-all border border-black/10 shadow-sm"
             aria-label="Previous slide"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100 border border-white/10"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/70 backdrop-blur-md text-black hover:bg-white/90 transition-all border border-black/10 shadow-sm"
             aria-label="Next slide"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
