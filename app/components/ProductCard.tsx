@@ -209,69 +209,71 @@ export default function ProductCard({ item }: { item: Product }) {
           )}
 
           {/* Sizes */}
-          {item.sizes && (
-            <div className="mt-3">
-              <div className="flex flex-wrap gap-1.5">
-                {(() => {
-                  try {
-                    // Try to parse as JSON array
-                    const parsedSizes = JSON.parse(item.sizes);
-                    if (Array.isArray(parsedSizes)) {
-                      return parsedSizes.slice(0, 6).map((size: string, idx: number) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-0.5 border border-stone-200 rounded text-stone-700 bg-white text-xs font-medium"
-                        >
-                          {size}
-                        </span>
-                      ));
-                    }
-                  } catch (e) {
-                    // If not JSON, handle as string
-                  }
+          {(() => {
+            // Check if sizes exist and are not empty
+            if (!item.sizes || (typeof item.sizes === 'string' && !item.sizes.trim())) {
+              return null;
+            }
 
-                  // Handle string format
-                  if (typeof item.sizes !== 'string') {
-                    return null;
-                  }
+            let sizesArray: string[] = [];
 
-                  const sizesStr = item.sizes.trim();
+            try {
+              // Try to parse as JSON array
+              const parsedSizes = JSON.parse(item.sizes);
+              if (Array.isArray(parsedSizes) && parsedSizes.length > 0) {
+                sizesArray = parsedSizes.map(s => String(s)).filter(s => s.trim().length > 0);
+              }
+            } catch (e) {
+              // If not JSON, handle as string
+              if (typeof item.sizes === 'string') {
+                const sizesStr = item.sizes.trim();
+                
+                if (sizesStr.length === 0) {
+                  return null;
+                }
 
-                  // If sizes are separated by commas, spaces, or other delimiters
-                  if (/[,\s\-\/]/.test(sizesStr)) {
-                    const sizesArray = sizesStr.split(/[,\s\-\/]+/).filter(s => s.length > 0);
-                    return sizesArray.slice(0, 6).map((size: string, idx: number) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-0.5 border border-stone-200 rounded text-stone-700 bg-white text-xs font-medium"
-                      >
-                        {size}
-                      </span>
-                    ));
-                  }
-
+                // If sizes are separated by commas, spaces, or other delimiters
+                if (/[,\s\-\/]/.test(sizesStr)) {
+                  sizesArray = sizesStr.split(/[,\s\-\/]+/).filter(s => s.trim().length > 0);
+                } else if (sizesStr.length >= 4 && /^\d+$/.test(sizesStr)) {
                   // If sizes are concatenated without delimiters (e.g. "39404142")
                   // Split by 2 characters (shoe sizes are typically 2 digits)
-                  if (sizesStr.length >= 4 && /^\d+$/.test(sizesStr)) {
-                    const sizesArray: string[] = [];
-                    for (let i = 0; i < sizesStr.length && i < 12; i += 2) {
-                      sizesArray.push(sizesStr.slice(i, i + 2));
+                  for (let i = 0; i < sizesStr.length && i < 12; i += 2) {
+                    const size = sizesStr.slice(i, i + 2);
+                    if (size.trim().length > 0) {
+                      sizesArray.push(size);
                     }
-                    return sizesArray.map((size: string, idx: number) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-0.5 border border-stone-200 rounded text-stone-700 bg-white text-xs font-medium"
-                      >
-                        {size}
-                      </span>
-                    ));
                   }
+                } else {
+                  // Single size or unknown format - show as is
+                  sizesArray = [sizesStr];
+                }
+              } else if (Array.isArray(item.sizes)) {
+                // Handle if sizes is already an array
+                sizesArray = item.sizes.map(s => String(s)).filter(s => s.trim().length > 0);
+              }
+            }
 
-                  return null;
-                })()}
+            // Only render if we have sizes to display
+            if (sizesArray.length === 0) {
+              return null;
+            }
+
+            return (
+              <div className="mt-3">
+                <div className="flex flex-wrap gap-1.5">
+                  {sizesArray.slice(0, 6).map((size: string, idx: number) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 border border-stone-200 rounded text-stone-700 bg-white text-xs font-medium"
+                    >
+                      {size.trim()}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         <div className="mt-4 flex items-end justify-between gap-4 border-t border-stone-100 pt-4 relative">

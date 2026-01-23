@@ -2,6 +2,36 @@ import { NextResponse } from 'next/server'
 
 const API_URL = 'http://185.146.3.132:8080'
 
+// Helper function to normalize sizes from various formats
+function normalizeSizes(product: any): string | null {
+  // Try different field names
+  let sizesValue = product.sizes || product.size || product.shoeSizes || product.shoe_size || product.shoeSize
+  
+  if (!sizesValue) {
+    return null
+  }
+  
+  // If it's already a string, return it
+  if (typeof sizesValue === 'string') {
+    return sizesValue.trim() || null
+  }
+  
+  // If it's an array, join it
+  if (Array.isArray(sizesValue)) {
+    return sizesValue.filter(s => s != null).map(s => String(s)).join(', ')
+  }
+  
+  // If it's an object, try to extract values
+  if (typeof sizesValue === 'object') {
+    const values = Object.values(sizesValue).filter(v => v != null)
+    if (values.length > 0) {
+      return values.map(v => String(v)).join(', ')
+    }
+  }
+  
+  return null
+}
+
 export async function GET(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
@@ -39,7 +69,10 @@ export async function GET(
                 const products = await productsResponse.json().catch(() => [])
                 const product = Array.isArray(products) ? products.find((p: any) => p.product_id === parseInt(id)) : null
                 if (product) {
-                    return NextResponse.json(product)
+                    return NextResponse.json({
+                        ...product,
+                        sizes: normalizeSizes(product),
+                    })
                 }
             }
 
@@ -67,7 +100,10 @@ export async function GET(
                 const products = await productsResponse.json().catch(() => [])
                 const product = Array.isArray(products) ? products.find((p: any) => p.product_id === parseInt(id)) : null
                 if (product) {
-                    return NextResponse.json(product)
+                    return NextResponse.json({
+                        ...product,
+                        sizes: normalizeSizes(product),
+                    })
                 }
             }
 
@@ -75,7 +111,10 @@ export async function GET(
         }
 
         const data = JSON.parse(text)
-        return NextResponse.json(data)
+        return NextResponse.json({
+            ...data,
+            sizes: normalizeSizes(data),
+        })
     } catch (error) {
         console.error('Error fetching product:', error)
         return NextResponse.json(

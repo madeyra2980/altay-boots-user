@@ -24,6 +24,16 @@ type Promotion = {
   endDate: string
 }
 
+type Catalog = {
+  catalog_id: number
+  name: string
+}
+
+type Product = {
+  product_id: number
+  name: string
+}
+
 const MONTHS_RU: { [key: number]: string } = {
   0: 'Января',
   1: 'Февраля',
@@ -54,6 +64,8 @@ const formatDate = (dateString: string) => {
 export default function PromotionPage() {
   const { id } = useParams()
   const [promotion, setPromotion] = useState<Promotion | null>(null)
+  const [catalogName, setCatalogName] = useState<string | null>(null)
+  const [productName, setProductName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -62,12 +74,68 @@ export default function PromotionPage() {
 
     const fetchPromotion = async () => {
       try {
-        const res = await fetch(`http://185.146.3.132:8080/api/v1/auth/promotion/${id}`)
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+        const res = await fetch(`/api/promotion/${id}`, {
+          headers: {
+            accept: '*/*',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        })
+        
         if (!res.ok) throw new Error('Failed to fetch promotion')
         const data = await res.json()
+        
+        if (!data) {
+          throw new Error('Promotion not found')
+        }
+        
+        setPromotion(data)
+        
+        // Fetch catalog name if catalogId exists
+        if (data.catalogId) {
+          try {
+            const catalogRes = await fetch('/api/catalogs', {
+              headers: {
+                accept: '*/*',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+            })
+            if (catalogRes.ok) {
+              const catalogs = await catalogRes.json()
+              const catalog = Array.isArray(catalogs) 
+                ? catalogs.find((c: Catalog) => c.catalog_id === data.catalogId)
+                : null
+              if (catalog) {
+                setCatalogName(catalog.name)
+              }
+            }
+          } catch (err) {
+            console.error('Failed to fetch catalog:', err)
+          }
+        }
+        
+        // Fetch product name if productId exists
+        if (data.productId) {
+          try {
+            const productRes = await fetch(`/api/product/${data.productId}`, {
+              headers: {
+                accept: '*/*',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+            })
+            if (productRes.ok) {
+              const product = await productRes.json()
+              if (product && product.name) {
+                setProductName(product.name)
+              }
+            }
+          } catch (err) {
+            console.error('Failed to fetch product:', err)
+          }
+        }
+        
         // Artificial delay for premium feel
         await new Promise(resolve => setTimeout(resolve, 800))
-        setPromotion(data)
       } catch (err) {
         setError('Не удалось загрузить акцию')
         console.error(err)
@@ -137,16 +205,16 @@ export default function PromotionPage() {
 
         <article className="bg-white rounded-2xl shadow-xl overflow-hidden border border-stone-100">
           {mainPhoto && (
-            <div className="relative h-[400px] sm:h-[500px] w-full group">
+            <div className="relative h-[400px] sm:h-[500px] w-full">
               <Image
                 src={mainPhoto}
                 alt={promotion.name}
                 fill
-                className="object-cover group-hover:scale-105 transition-transform duration-700"
+                className="object-cover"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/40 to-transparent" />
 
+              {/* Discount Badge */}
               <div className="absolute top-6 left-6 z-10">
                 <span className="inline-flex items-center px-4 py-2 rounded-full bg-orange-600/90 text-white font-bold text-sm shadow-lg backdrop-blur-sm border border-orange-500/50">
                   -{promotion.percentageDiscounted}% Скидка
@@ -156,6 +224,56 @@ export default function PromotionPage() {
             </div>
           )}
 
+          {/* Promotion Info Section - Below Photo with proper spacing */}
+          <div className="px-8 sm:px-10 pt-8 pb-6 border-b border-stone-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Global Status */}
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs text-stone-500 font-medium mb-1">Применение</p>
+                  <p className="text-stone-900 font-bold">
+                    {promotion.global ? 'На все товары' : 'Не на все товары'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Catalog Info */}
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs text-stone-500 font-medium mb-1">Каталог</p>
+                  <p className="text-stone-900 font-bold">
+                    {catalogName ? catalogName : 'Не отмечен каталог'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Product Info */}
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs text-stone-500 font-medium mb-1">Товар</p>
+                  <p className="text-stone-900 font-bold">
+                    {productName ? productName : 'Не отмечен продукт'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="p-8 sm:p-10">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
               <div className="lg:col-span-2 space-y-8">
@@ -164,9 +282,16 @@ export default function PromotionPage() {
                     <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
                     Описание
                   </h2>
-                  <p className="text-lg text-stone-600 leading-relaxed whitespace-pre-line">
-                    {promotion.description}
-                  </p>
+                  <div className="space-y-4">
+                    <h3 className="text-2xl sm:text-3xl font-bold text-stone-900">
+                      {promotion.name}
+                    </h3>
+                    {promotion.description && (
+                      <p className="text-lg text-stone-600 leading-relaxed whitespace-pre-line">
+                        {promotion.description}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="bg-stone-50 rounded-xl p-6 border border-stone-100">
