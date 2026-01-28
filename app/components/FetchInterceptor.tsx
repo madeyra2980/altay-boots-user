@@ -12,7 +12,7 @@ export default function FetchInterceptor() {
 
     const originalFetch = window.fetch.bind(window)
 
-    window.fetch = async (input: RequestInfo, init?: RequestInit) => {
+    window.fetch = async (input: URL | RequestInfo, init?: RequestInit) => {
       try {
         const token = localStorage.getItem('token')
 

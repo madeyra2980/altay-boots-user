@@ -174,7 +174,7 @@ export default function ProductCard({ item }: { item: Product }) {
                   {allPhotos.map((_, idx) => (
                     <div
                       key={idx}
-                      className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all ${idx === activePhotoIndex ? 'bg-white scale-125' : 'bg-white/50'}`}
+                      className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all ${idx === activePhotoIndex ? 'bg-orange-500 scale-125' : 'bg-orange-300'}`}
                     />
                   ))}
                 </div>
@@ -227,7 +227,7 @@ export default function ProductCard({ item }: { item: Product }) {
               // If not JSON, handle as string
               if (typeof item.sizes === 'string') {
                 const sizesStr = item.sizes.trim();
-                
+
                 if (sizesStr.length === 0) {
                   return null;
                 }
@@ -250,7 +250,7 @@ export default function ProductCard({ item }: { item: Product }) {
                 }
               } else if (Array.isArray(item.sizes)) {
                 // Handle if sizes is already an array
-                sizesArray = item.sizes.map(s => String(s)).filter(s => s.trim().length > 0);
+                sizesArray = (item.sizes as any[]).map(s => String(s)).filter(s => s.trim().length > 0);
               }
             }
 

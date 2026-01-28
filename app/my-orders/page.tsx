@@ -1,13 +1,31 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import ConfirmAlert from '../components/ui/ConfirmAlert'
 import Loading from '../components/ui/Loading'
 import { useLanguage } from '../i18n/LanguageContext'
 
+type Photo = {
+  photo_id?: number
+  photoURL?: string
+}
+
+type Product = {
+  product_id?: number
+  name?: string
+  description?: string
+  price?: number
+  oldPrice?: number
+  active?: boolean
+  catalogName?: string
+  photos?: Photo[]
+}
+
 type OrderItem = {
   productId?: number
+  order_item_id?: number
   quantity?: number
   active?: boolean
   productInfo?: {
@@ -16,7 +34,10 @@ type OrderItem = {
     productPrice?: number
     catalogName?: string
     active?: boolean
+    photo?: string | Photo[]
+    photos?: Photo[]  // API also returns photos array
   }
+  product?: Product
 }
 
 type Order = {
@@ -27,10 +48,9 @@ type Order = {
   items?: OrderItem[]
 }
 
-const ORDERS_URL = 'http://185.146.3.132:8080/api/v1/user/orders'
-
 export default function MyOrdersPage() {
   const { t } = useLanguage()
+  const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -61,7 +81,7 @@ export default function MyOrdersPage() {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch(`${ORDERS_URL}`, {
+        const res = await fetch('/api/orders', {
           headers: {
             accept: '*/*',
             Authorization: `Bearer ${token}`,
@@ -74,6 +94,15 @@ export default function MyOrdersPage() {
           throw new Error(message)
         }
         const list = Array.isArray(data) ? (data as Order[]) : []
+
+        // Log first order to see data structure
+        if (list.length > 0) {
+          console.log('[Orders Page] First order data:', JSON.stringify(list[0], null, 2))
+          if (list[0].items && list[0].items.length > 0) {
+            console.log('[Orders Page] First item structure:', JSON.stringify(list[0].items[0], null, 2))
+          }
+        }
+
         setOrders(list)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ошибка загрузки заказов')
@@ -205,12 +234,15 @@ export default function MyOrdersPage() {
               return (
                 <div
                   key={`${order.orderStartDate}-${idx}`}
-                  className={`bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden hover:shadow-md transition-all duration-300 ${!isActive ? 'opacity-60 grayscale-[0.5]' : ''}`}
+                  onClick={() => router.push(`/my-orders/${orderId}`)}
+                  className={`bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer ${!isActive ? 'opacity-60 grayscale-[0.5]' : ''}`}
                 >
                   <div className="px-6 py-4 border-b border-stone-100 bg-stone-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-3">
-                        <h3 className={`text-lg font-bold ${isActive ? 'text-stone-900' : 'text-stone-400'}`}>Заказ #{orderId}</h3>
+                        <Link href={`/my-orders/${orderId}`} className="hover:text-orange-600 transition-colors">
+                          <h3 className={`text-lg font-bold ${isActive ? 'text-stone-900' : 'text-stone-400'}`}>Заказ #{orderId}</h3>
+                        </Link>
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium 
                            ${isActive
                             ? (isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800')
@@ -228,6 +260,7 @@ export default function MyOrdersPage() {
                             href={`https://wa.me/77752794489?text=${encodeURIComponent(`Здравствуйте! Я хочу оплатить заказ №${orderId}.`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
                             className="inline-flex items-center gap-1.5 text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-2 py-1 rounded-md border border-green-200 transition-colors"
                           >
                             <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
@@ -241,7 +274,10 @@ export default function MyOrdersPage() {
                     <div className="flex items-center gap-2">
                       {order.order_id && isActive && (
                         <button
-                          onClick={() => handleSoftDelete(order.order_id!)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleSoftDelete(order.order_id!)
+                          }}
                           className="text-sm font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
                           title="Скрыть заказ"
                         >
@@ -252,7 +288,10 @@ export default function MyOrdersPage() {
 
                       {order.order_id && (
                         <button
-                          onClick={() => confirmDelete(order.order_id!)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            confirmDelete(order.order_id!)
+                          }}
                           className="text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg transition-colors flex items-center justify-center"
                           title="Полностью удалить заказ"
                         >
@@ -268,22 +307,74 @@ export default function MyOrdersPage() {
                     {order.items && order.items.length ? (
                       <ul className="divide-y divide-stone-100">
                         {order.items.map((item, iIdx) => {
+                          // Try new format first, fallback to old format
+                          const product = item.product
                           const info = item.productInfo
-                          const name = info?.productName ?? `Товар #${info?.productId ?? item.productId ?? '—'}`
-                          const price = info?.productPrice
+
+                          const name = product?.name || info?.productName || `Товар #${product?.product_id || info?.productId || item.productId || '—'}`
+                          const price = product?.price || info?.productPrice
+                          const catalogName = product?.catalogName || info?.catalogName
+
+                          // Handle photo - can be string, array, or Photo object array
+                          let photoUrl: string | undefined
+                          
+                          // Debug logging
+                          console.log('Item data:', JSON.stringify(item, null, 2))
+                          console.log('Product:', JSON.stringify(product, null, 2))
+                          console.log('Info:', JSON.stringify(info, null, 2))
+                          
+                          if (product?.photos && product.photos.length > 0) {
+                            photoUrl = product.photos[0].photoURL
+                            console.log('Found photo from product.photos:', photoUrl)
+                          } else if (info?.photos && Array.isArray(info.photos) && info.photos.length > 0) {
+                            // productInfo.photos format from API
+                            photoUrl = info.photos[0].photoURL
+                            console.log('Found photo from info.photos:', photoUrl)
+                          } else if (info?.photo) {
+                            if (typeof info.photo === 'string') {
+                              photoUrl = info.photo
+                              console.log('Found photo from info.photo (string):', photoUrl)
+                            } else if (Array.isArray(info.photo) && info.photo.length > 0) {
+                              const firstPhoto = info.photo[0]
+                              photoUrl = typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.photoURL
+                              console.log('Found photo from info.photo (array):', photoUrl)
+                            }
+                          }
+                          
+                          console.log('Final photoUrl:', photoUrl)
+
                           return (
                             <li
-                              key={`${info?.productId ?? item.productId}-${iIdx}`}
+                              key={`${product?.product_id || info?.productId || item.productId}-${iIdx}`}
                               className="py-4 flex items-center justify-between group"
                             >
                               <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-400">
-                                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                </div>
+                                {photoUrl ? (
+                                  <div className="h-16 w-16 rounded-lg overflow-hidden border border-stone-200 flex-shrink-0">
+                                    <img
+                                      src={`http://185.146.3.132:8080${photoUrl}`}
+                                      alt={name}
+                                      className="h-full w-full object-cover"
+                                      loading="lazy"
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        if (target.parentElement) {
+                                          target.parentElement.classList.add('bg-stone-100', 'flex', 'items-center', 'justify-center');
+                                          target.parentElement.innerHTML = `<svg class="w-6 h-6 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>`;
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="h-16 w-16 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-400 flex-shrink-0">
+                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                  </div>
+                                )}
                                 <div>
                                   <p className="font-medium text-stone-900 group-hover:text-orange-600 transition-colors cursor-default">{name}</p>
-                                  {info?.catalogName && (
-                                    <p className="text-xs text-stone-500">Категория: {info.catalogName}</p>
+                                  {catalogName && (
+                                    <p className="text-xs text-stone-500">Категория: {catalogName}</p>
                                   )}
                                 </div>
                               </div>

@@ -175,7 +175,8 @@ const PromotionsSlider = () => {
                     )}
 
                     {/* Discount Badge - Positioned inside the centered container */}
-                    <div className="absolute top-6 left-0 z-20">
+                    {/* Немного сдвигаем вправо, чтобы бейдж не прилипал к самому краю */}
+                    <div className="absolute top-6 left-4 sm:left-6 lg:left-8 z-20">
                       <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-orange-600/90 backdrop-blur-sm border border-orange-500/50 text-white text-sm font-semibold shadow-lg shadow-orange-900/20">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                         <span>-{promotion.percentageDiscounted}% Скидка</span>
@@ -194,14 +195,16 @@ const PromotionsSlider = () => {
         <>
           <button
             onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/70 backdrop-blur-md text-black hover:bg-white/90 transition-all border border-black/10 shadow-sm"
+            // Ещё ближе к фото (глубже на баннер)
+            className="absolute left-10 sm:left-16 lg:left-24 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/70 backdrop-blur-md text-black hover:bg-white/90 transition-all border border-black/10 shadow-sm"
             aria-label="Previous slide"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/70 backdrop-blur-md text-black hover:bg-white/90 transition-all border border-black/10 shadow-sm"
+            // Аналогично сдвигаем правую кнопку глубже внутрь, к баннеру
+            className="absolute right-10 sm:right-16 lg:right-24 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/70 backdrop-blur-md text-black hover:bg-white/90 transition-all border border-black/10 shadow-sm"
             aria-label="Next slide"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
