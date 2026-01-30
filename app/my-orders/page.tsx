@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react'
 import ConfirmAlert from '../components/ui/ConfirmAlert'
 import Loading from '../components/ui/Loading'
 import { useLanguage } from '../i18n/LanguageContext'
+import { normalizePhoto } from '../utils/imageUtils'
 
 type Photo = {
   photo_id?: number
@@ -324,19 +325,17 @@ export default function MyOrdersPage() {
                           console.log('Info:', JSON.stringify(info, null, 2))
                           
                           if (product?.photos && product.photos.length > 0) {
-                            photoUrl = product.photos[0].photoURL
+                            photoUrl = normalizePhoto(product.photos[0])
                             console.log('Found photo from product.photos:', photoUrl)
                           } else if (info?.photos && Array.isArray(info.photos) && info.photos.length > 0) {
-                            // productInfo.photos format from API
-                            photoUrl = info.photos[0].photoURL
+                            photoUrl = normalizePhoto(info.photos[0])
                             console.log('Found photo from info.photos:', photoUrl)
                           } else if (info?.photo) {
                             if (typeof info.photo === 'string') {
-                              photoUrl = info.photo
+                              photoUrl = normalizePhoto(info.photo)
                               console.log('Found photo from info.photo (string):', photoUrl)
                             } else if (Array.isArray(info.photo) && info.photo.length > 0) {
-                              const firstPhoto = info.photo[0]
-                              photoUrl = typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.photoURL
+                              photoUrl = normalizePhoto(info.photo[0])
                               console.log('Found photo from info.photo (array):', photoUrl)
                             }
                           }
@@ -352,7 +351,7 @@ export default function MyOrdersPage() {
                                 {photoUrl ? (
                                   <div className="h-16 w-16 rounded-lg overflow-hidden border border-stone-200 flex-shrink-0">
                                     <img
-                                      src={`http://185.146.3.132:8080${photoUrl}`}
+                                      src={photoUrl}
                                       alt={name}
                                       className="h-full w-full object-cover"
                                       loading="lazy"

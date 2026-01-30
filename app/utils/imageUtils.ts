@@ -1,6 +1,7 @@
 type PhotoObject = {
-    photo_id: number
-    photoURL: string
+    photo_id?: number
+    photoURL?: string
+    photoUrl?: string
 }
 
 export const normalizePhoto = (photo?: PhotoObject | string | null): string => {
@@ -8,9 +9,9 @@ export const normalizePhoto = (photo?: PhotoObject | string | null): string => {
 
     let path = ''
 
-    // Если это объект с photoURL
-    if (typeof photo === 'object' && photo !== null && 'photoURL' in photo) {
-        path = photo.photoURL || ''
+    // Если это объект с photoURL или photoUrl
+    if (typeof photo === 'object' && photo !== null) {
+        path = (photo as any).photoURL || (photo as any).photoUrl || ''
     } else if (typeof photo === 'string') {
         path = photo
     }
